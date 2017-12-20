@@ -5,8 +5,11 @@
 ; Part 1
 ;
 
-(def starting-position
-  {:position [0 0] :value 1 :turn 0 :next-directions []})
+(defn starting-position
+  ([]
+   (starting-position #(inc (:value %))))
+  ([val-fn]
+   {:position [0 0] :value 1 :turn 0 :next-directions [] :val-fn val-fn}))
 
 (defn gen-arm-pattern
   [n c1 c2 c3]
@@ -33,8 +36,8 @@
   "docstring"
   [last-move direction]
   {:position (vec (map + (:position last-move) (direction->xy direction)))
-   :value    (inc (:value last-move))
-   :turn     (:turn last-move)})
+   :turn     (:turn last-move)
+   :val-fn   (:val-fn last-move)})
 
 (defn get-next-directions
   [move]
@@ -57,35 +60,30 @@
 
 (defn next-move
   [last-move]
-  (if (empty? (get-next-directions last-move))
-    (gen-next-arm-first-move last-move)
-    (gen-arm-next-move last-move)))
-
-(defn update-spiral-by-move
-  "docstring"
-  [spiral direction]
-  (let [last-move (last spiral)
-        next-move (direction->move last-move direction)]
-    (conj spiral next-move)))
+  (let [next (if (empty? (get-next-directions last-move))
+               (gen-next-arm-first-move last-move)
+               (gen-arm-next-move last-move))]
+    (assoc next :value ((:val-fn last-move) last-move))))
 
 (defn gen-spiral-until
-  [stop-fn]
-  (take-while stop-fn (iterate next-move starting-position)))
+  [start stop-fn]
+  (take-while stop-fn (iterate next-move start)))
 
 (defn gen-spiral-until-equals
-  [val]
-  (gen-spiral-until #(< (:value %) (inc val))))
-
-(defn gen-spiral-until-gt
-  [val]
-  (gen-spiral-until #(< (:value %) (+ 2 val))))
+  [start val]
+  (gen-spiral-until start #(< (:value %) (inc val))))
 
 (defn manhattan-distance-at
   [val]
-  (let [position (:position (last (gen-spiral-until-equals val)))]
+  (let [position (:position (last (gen-spiral-until-equals (starting-position) val)))]
     (+ (math/abs (first position)) (math/abs (second position)))))
 
 ;
 ; Part 2
 ;
+
+(defn gen-spiral-until-gt
+  [start val]
+  (gen-spiral-until start #(< (:value %) (+ 2 val))))
+
 
