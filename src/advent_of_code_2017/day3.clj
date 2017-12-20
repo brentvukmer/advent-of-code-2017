@@ -69,12 +69,21 @@
     (conj spiral next-move)))
 
 (defn gen-spiral-until
-  [val]
-  (take-while #(< (:value %) val) (iterate next-move starting-position)))
+  [stop-fn]
+  (take-while stop-fn (iterate next-move starting-position)))
 
-(defn manhattan-distance
-  [position]
-  (+ (math/abs (first position)) (math/abs (second position))))
+(defn gen-spiral-until-equals
+  [val]
+  (gen-spiral-until #(< (:value %) (inc val))))
+
+(defn gen-spiral-until-gt
+  [val]
+  (gen-spiral-until #(< (:value %) (+ 2 val))))
+
+(defn manhattan-distance-at
+  [val]
+  (let [position (:position (last (gen-spiral-until-equals val)))]
+    (+ (math/abs (first position)) (math/abs (second position)))))
 
 ;
 ; Part 2
