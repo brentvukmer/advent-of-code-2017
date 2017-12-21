@@ -123,28 +123,47 @@
 ; When remaining is empty, return updated values
 ;
 
+(defn sqr
+  "Uses the numeric tower expt to square a number"
+  [x]
+  (math/expt x 2))
+
+(defn euclidean-squared-distance
+  "Computes the Euclidean squared distance between two sequences"
+  [a b]
+  (reduce + (map (comp sqr -) a b)))
+
+(defn euclidean-distance
+  "Computes the Euclidean distance between two sequences"
+  [a b]
+  (math/exact-integer-sqrt (euclidean-squared-distance a b)))
+
 (defn neighbors
   ""
   [spiral]
   (let [last-move (last spiral)
-        previous-moves (drop-last spiral)]
-    ; TODO: use take-while with this predicate
-    (filter #(= 1 (manhattan-distance (:position last-move) (:position %))) previous-moves)))
+        previous-moves (reverse (drop-last spiral))]
+    (filter #(= 1 (first (euclidean-distance (:position last-move) (:position %)))) previous-moves)))
 
 (defn sum-neighbors
   ""
   [spiral]
   (apply + (map :value (neighbors spiral))))
 
+(defn strip-extra-keys
+  [m]
+  (dissoc m :turn :val-fn :next-directions))
+
 (defn sum-neighbors-spiral-until-gt
   ""
   [n]
   (let [zspiral-seq (gen-zeros-spiral)]
-    (loop [updated-values [(first zspiral-seq)]
+    (loop [updated-values [(strip-extra-keys (first zspiral-seq))]
            remaining (rest zspiral-seq)]
-      (let [updated-value (sum-neighbors (conj updated-values (first remaining)))]
+      (let [first-next (strip-extra-keys (first remaining))
+            updated-value (sum-neighbors (conj updated-values first-next))]
         (if (> (:value (last updated-values)) n)
           updated-values
-          (recur (conj updated-values (assoc (first remaining) :value updated-value))
+          (recur (conj updated-values (assoc first-next :value updated-value))
                  (rest remaining)))))))
 
