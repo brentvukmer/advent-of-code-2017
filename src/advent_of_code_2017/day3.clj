@@ -1,5 +1,6 @@
 (ns advent-of-code-2017.day3
-  (:require [clojure.math.numeric-tower :as math]))
+  (:require [clojure.math.numeric-tower :as math]
+            [clojure.pprint :as pp]))
 
 ;
 ; Part 1
@@ -99,19 +100,16 @@
   [start val]
   (gen-spiral-until start #(<= (:value %) val)))
 
-
-(defn neighbors
-  ""
-  [spiral]
-  (let [last-move (last spiral)
-        previous-moves (drop-last spiral)]
-    (filter #(= 1 (manhattan-distance (:position last-move) (:position %))) previous-moves)))
-
 (defn zeros-spiral
   ""
   [n]
   (let [spiral (gen-spiral-until-equals (starting-position) n)]
     (cons (first spiral) (map #(assoc % :value 0) (rest spiral)))))
+
+(defn gen-zeros-spiral
+  ""
+  []
+  (iterate next-move (starting-position (fn [x] 0))))
 
 ;
 ; Do this recursively:
@@ -125,9 +123,28 @@
 ; When remaining is empty, return updated values
 ;
 
+(defn neighbors
+  ""
+  [spiral]
+  (let [last-move (last spiral)
+        previous-moves (drop-last spiral)]
+    ; TODO: use take-while with this predicate
+    (filter #(= 1 (manhattan-distance (:position last-move) (:position %))) previous-moves)))
+
 (defn sum-neighbors
   ""
   [spiral]
   (apply + (map :value (neighbors spiral))))
 
+(defn sum-neighbors-spiral-until-gt
+  ""
+  [n]
+  (let [zspiral-seq (gen-zeros-spiral)]
+    (loop [updated-values [(first zspiral-seq)]
+           remaining (rest zspiral-seq)]
+      (let [updated-value (sum-neighbors (conj updated-values (first remaining)))]
+        (if (> (:value (last updated-values)) n)
+          updated-values
+          (recur (conj updated-values (assoc (first remaining) :value updated-value))
+                 (rest remaining)))))))
 
