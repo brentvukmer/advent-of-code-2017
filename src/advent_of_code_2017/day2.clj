@@ -2,9 +2,6 @@
  (:require [clojure.math.combinatorics :as combo]
            [clojure.java.io :as io]))
 
-;
-; TODO: Change this to use clojure.io/resource to load from classpath
-;
 (def day2-inputs (map #(map (fn [x] (Integer/parseInt x)) (clojure.string/split % #"\s")) (clojure.string/split-lines (slurp (io/resource "day2")))))
 
 (def answer1 (reduce + (map #(let [sorted (sort %) min (first sorted) max (last sorted)] (- max min)) day2-inputs)))
