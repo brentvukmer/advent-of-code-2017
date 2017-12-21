@@ -1,6 +1,5 @@
 (ns advent-of-code-2017.day3
-  (:require [clojure.math.numeric-tower :as math]
-            [clojure.pprint :as pp]))
+  (:require [clojure.math.numeric-tower :as math]))
 
 ;
 ; Part 1
