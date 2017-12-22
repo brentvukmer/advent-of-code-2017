@@ -26,13 +26,13 @@
 (defn find-escape-count
   "docstring"
   [coll]
-  (loop [num-moves 0
+  (loop [step-count 0
          current-index 0
          coll coll]
     (if (> current-index (dec (count coll)))
-      num-moves
+      step-count
       (let [current-value (get coll current-index)]
-        (recur (+ num-moves current-value)
+        (recur (inc step-count)
                (+ current-index current-value)
                (assoc-in coll [current-index] (inc current-value)))))))
 
