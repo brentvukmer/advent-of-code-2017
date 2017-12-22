@@ -35,6 +35,9 @@
         (recur (inc step-count)
                (+ current-index current-value)
                (assoc-in coll [current-index] (inc current-value)))))))
+;
+; Part 2
+;
 
 (defn find-escape-count2
   "docstring"
