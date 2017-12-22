@@ -36,3 +36,18 @@
                (+ current-index current-value)
                (assoc-in coll [current-index] (inc current-value)))))))
 
+(defn find-escape-count2
+  "docstring"
+  [coll]
+  (loop [step-count 0
+         current-index 0
+         coll coll]
+    (if (> current-index (dec (count coll)))
+      step-count
+      (let [current-value (get coll current-index)
+            updated-value (if (>= current-value 3) (dec current-value) (inc current-value))]
+        (recur (inc step-count)
+               (+ current-index current-value)
+               (assoc-in coll [current-index] updated-value))))))
+
+
