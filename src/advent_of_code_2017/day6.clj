@@ -62,12 +62,23 @@
 
 (defn find-repeated-pattern
   ""
-  [memory-bank]
-  (loop [counter 0
-         memory-bank memory-bank
-         patterns #{}]
-    (if (some #{memory-bank} patterns)
-      counter
-      (recur (inc counter)
-             (redistribute-blocks memory-bank)
-             (conj patterns memory-bank)))))
+  ([memory-bank]
+    (find-repeated-pattern memory-bank 1))
+  ([memory-bank n]
+   (loop [counter 0
+          memory-bank memory-bank
+          patterns {}]
+     (let [match (get patterns memory-bank)]
+       (if (= n match)
+         counter
+         (recur (inc counter)
+                (redistribute-blocks memory-bank)
+                (assoc patterns memory-bank (if match (inc match)  1))))))))
+
+;
+; Part 2
+;
+
+; Added 'n' parameter to find-repeated-pattern
+
+(def day2-answer (- (find-repeated-pattern day6-inputs 2) (find-repeated-pattern day6-inputs)))
