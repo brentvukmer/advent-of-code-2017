@@ -59,3 +59,15 @@
                (if (get memory-banks (inc current-index))
                  (inc current-index)
                  0))))))
+
+(defn find-repeated-pattern
+  ""
+  [memory-bank]
+  (loop [counter 0
+         memory-bank memory-bank
+         patterns #{}]
+    (if (some #{memory-bank} patterns)
+      counter
+      (recur (inc counter)
+             (redistribute-blocks memory-bank)
+             (conj patterns memory-bank)))))
