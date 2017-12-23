@@ -1,6 +1,5 @@
 (ns advent-of-code-2017.day6
-  (:require [clojure.java.io :as io]
-            [clojure.math.numeric-tower :as math]))
+  (:require [clojure.java.io :as io]))
 
 ;
 ; Part 1
@@ -73,7 +72,7 @@
          counter
          (recur (inc counter)
                 (redistribute-blocks memory-bank)
-                (assoc patterns memory-bank (if match (inc match)  1))))))))
+                (assoc patterns memory-bank (if match (inc match) 1))))))))
 
 ;
 ; Part 2
