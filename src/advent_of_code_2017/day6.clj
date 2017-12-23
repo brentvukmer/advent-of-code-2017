@@ -14,3 +14,48 @@
 (def day6-inputs
   (vec (read-lines-classpath-resource "day6")))
 
+(defn indexed-vals
+  ""
+  [memory-banks]
+  (group-by second (map vector (range) memory-banks)))
+
+(defn max-val
+  ""
+  [indexed-vals]
+  (apply max (keys indexed-vals)))
+
+(defn first-max-index
+  ""
+  [indexed-vals max-val]
+  (ffirst (get indexed-vals max-val)))
+
+(defn find-most-blocks
+  "Finds the memory bank with the most blocks.
+  Ties won by the lowest-numbered memory bank."
+  [memory-banks]
+  (let [indexed-vals (indexed-vals memory-banks)
+        max-val (max-val indexed-vals)]
+    (first-max-index indexed-vals max-val)))
+
+(defn next-index
+  [current-index max-index]
+  (if (< current-index max-index)
+    (inc current-index)
+    0))
+
+(defn redistribute-blocks
+  ""
+  [memory-banks]
+  (let [last-index (dec (count memory-banks))
+        index-for-max (find-most-blocks memory-banks)
+        max-value (get memory-banks index-for-max)]
+    (loop [memory-banks (assoc-in memory-banks [index-for-max] 0)
+           num-blocks max-value
+           current-index (next-index index-for-max last-index)]
+      (if (zero? num-blocks)
+        memory-banks
+        (recur (assoc-in memory-banks [current-index] (inc (get memory-banks current-index)))
+               (dec num-blocks)
+               (if (get memory-banks (inc current-index))
+                 (inc current-index)
+                 0))))))
