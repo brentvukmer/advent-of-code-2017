@@ -35,3 +35,10 @@
 ; Part 2
 ;
 
+(defn sum-weights
+  ""
+  [key tree]
+  (let [program (key tree)
+        weight (:weight program)
+        programs (:programs program)]
+    (apply + (cons weight (map sum-weights programs)))))
