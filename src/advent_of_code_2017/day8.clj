@@ -72,13 +72,20 @@
   ""
   [inputs]
   (loop [registers (initial-registers inputs)
-         instructions inputs]
+         instructions inputs
+         history []]
     (if (empty? instructions)
-      registers
+      history
       (recur (update-register registers (first instructions))
-             (rest instructions)))))
+             (rest instructions)
+             (conj history registers)))))
 
 (defn max-register-val-after-updates
   ""
   [inputs]
-  (apply max (vals (process-register-instructions inputs))))
+  (apply max (vals (last (process-register-instructions inputs)))))
+
+(defn max-register-val-in-update-history
+  ""
+  [inputs]
+  (apply max (into #{} (mapcat vals (process-register-instructions inputs)))))
