@@ -42,6 +42,17 @@
     :else
     (throw (IllegalArgumentException. (str "'" token "' is not 'inc' or 'dec'")))))
 
+(defn token->comparison-operator
+  ""
+  [token]
+  (cond
+    (= token "==")
+    =
+    (= token "!=")
+    (complement =)
+    :else
+    (find-var (symbol (str "clojure.core/" token)))))
+
 (defn update-register
   ""
   ([registers input-tokens]
@@ -49,7 +60,7 @@
          operator-var (token->arithmetic-operator (second input-tokens))
          delta (Integer/parseInt (get input-tokens 2))
          kw2 (keyword (get input-tokens 4))
-         compare-fn-var (find-var (symbol (str "clojure.core/" (get input-tokens 5))))
+         compare-fn-var (token->comparison-operator (get input-tokens 5))
          val (Integer/parseInt (get input-tokens 6))]
      (update-register registers kw1 operator-var delta kw2 compare-fn-var val)))
   ([registers kw1 operator-var delta kw2 compare-fn-var val]
@@ -58,6 +69,7 @@
      registers)))
 
 (defn process-register-instructions
+  ""
   [inputs]
   (loop [registers (initial-registers inputs)
          instructions inputs]
@@ -65,3 +77,8 @@
       registers
       (recur (update-register registers (first instructions))
              (rest instructions)))))
+
+(defn max-register-val-after-updates
+  ""
+  [inputs]
+  (apply max (vals (process-register-instructions inputs))))
