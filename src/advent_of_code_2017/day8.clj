@@ -20,3 +20,40 @@
   ""
   [inputs]
   (into {} (map vector (set (map (comp keyword first) inputs)) (repeat 0))))
+
+;
+; Convert input tokens into:
+; - keyword
+; - var
+; - int
+; - keyword
+; - var
+; - int
+;
+
+(defn token->arithmetic-operator
+  ""
+  [token]
+  (cond
+    (= token "inc")
+    +
+    (= token "dec")
+    -
+    :else
+    (throw (IllegalArgumentException. (str "'" token "' is not 'inc' or 'dec'")))))
+
+(defn update-register
+  ""
+  ([registers input-tokens]
+   (let [kw1 (keyword (first input-tokens))
+         operator-var (token->arithmetic-operator (second input-tokens))
+         delta (Integer/parseInt (get input-tokens 2))
+         kw2 (keyword (get input-tokens 4))
+         compare-fn-var (find-var (symbol (str "clojure.core/" (get input-tokens 5))))
+         val (Integer/parseInt (get input-tokens 6))]
+     (update-register registers kw1 operator-var delta kw2 compare-fn-var val)))
+  ([registers kw1 operator-var delta kw2 compare-fn-var val]
+   (if (compare-fn-var (kw2 registers) val)
+     (assoc registers kw1 (operator-var (kw1 registers) delta))
+     registers)))
+
