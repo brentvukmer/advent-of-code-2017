@@ -43,26 +43,61 @@
         programs (:programs program)]
     (apply + (cons weight (map #(sum-weights % tree) programs)))))
 
-(defn collect-weights
-  "docstring"
+(defn collect-program-weights
+  ""
   [kw tree]
-  (let [program (kw tree)
-        weight (:weight program)
-        programs (:programs program)]
-    (cons weight (mapcat #(collect-weights % tree) programs))))
+  (map (fn [x] {x (sum-weights x tree)})
+       (get-in tree [kw :programs])))
 
-(defn find-imbalanced-weight
+(defn find-unbalanced-program
   "docstring"
   ([tree]
-   (find-imbalanced-weight (find-root-program tree) tree))
+   (find-unbalanced-program (find-root-program tree) tree))
   ([kw tree]
    (let [search-result
          (filter #(= (count (val %)) 1)
                  (group-by #(val %)
                            (apply merge
-                                  (map (fn [x] {x (sum-weights x tree)})
-                                       (get-in tree [kw :programs])))))]
-     {(get-in (first search-result) [1 0 0]) (ffirst search-result)})))
+                                  (collect-program-weights kw tree))))
+         key (get-in (first search-result) [1 0 0])
+         val (ffirst search-result)]
+     (if (nil? key)
+       []
+       [key val]))))
+
+;
+; Path starts one level down from the root.
+; Find the node at the root of the imbalance.
+;
+
+(defn trace-weight-imbalance
+  "docstring"
+  [tree]
+  (loop [search-result (find-unbalanced-program tree)
+         path []]
+    (if (empty? search-result)
+      path
+      (recur (find-unbalanced-program (first search-result) tree)
+             (conj path search-result)))))
+
+;
+; Find the difference between the imbalanced node's peers' average weight.
+; Return the adjusted weight for the node in question (the weight of the node itself).
+;
+
+(defn balanced-weight-node
+  ""
+  [tree]
+  (let [trace (trace-weight-imbalance tree)
+        parent-child (take-last 2 trace)
+        parent (first parent-child)
+        child (second parent-child)
+        child-name (first child)
+        child-weight (second child)
+        peer-weight (first (clojure.set/difference (set (mapcat vals (collect-program-weights (first parent) tree))) #{child-weight}))
+        weight-diff (- peer-weight child-weight)
+        desired-weight (+ weight-diff (:weight (child-name tree)))]
+    {child-name desired-weight}))
 
 
 
