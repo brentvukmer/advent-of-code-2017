@@ -57,3 +57,11 @@
      (assoc registers kw1 (operator-var (kw1 registers) delta))
      registers)))
 
+(defn process-register-instructions
+  [inputs]
+  (loop [registers (initial-registers inputs)
+         instructions inputs]
+    (if (empty? instructions)
+      registers
+      (recur (update-register registers (first instructions))
+             (rest instructions)))))
