@@ -37,8 +37,32 @@
 
 (defn sum-weights
   ""
-  [key tree]
-  (let [program (key tree)
+  [kw tree]
+  (let [program (kw tree)
         weight (:weight program)
         programs (:programs program)]
-    (apply + (cons weight (map sum-weights programs)))))
+    (apply + (cons weight (map #(sum-weights % tree) programs)))))
+
+(defn collect-weights
+  "docstring"
+  [kw tree]
+  (let [program (kw tree)
+        weight (:weight program)
+        programs (:programs program)]
+    (cons weight (mapcat #(collect-weights % tree) programs))))
+
+(defn find-imbalanced-weight
+  "docstring"
+  ([tree]
+   (find-imbalanced-weight (find-root-program tree) tree))
+  ([kw tree]
+   (let [search-result
+         (filter #(= (count (val %)) 1)
+                 (group-by #(val %)
+                           (apply merge
+                                  (map (fn [x] {x (sum-weights x tree)})
+                                       (get-in tree [kw :programs])))))]
+     {(get-in (first search-result) [1 0 0]) (ffirst search-result)})))
+
+
+
