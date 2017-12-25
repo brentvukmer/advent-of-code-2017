@@ -1,5 +1,0 @@
-S = group
-group = <'{'> group-item* <'}'>
-<group-item> = group? garbage? <','?>
-garbage = <'<'> char-stream <'>'>
-<char-stream> = 'a'

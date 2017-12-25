@@ -1,0 +1,5 @@
+S = group
+group = <'{'> group-item* <'}'>
+<group-item> = (group? | garbage?) <','?>
+garbage = <'<'> garbage-chars? <'>'>
+<garbage-chars> = #'[a-z,\\{\\}\\<\\!]'*
