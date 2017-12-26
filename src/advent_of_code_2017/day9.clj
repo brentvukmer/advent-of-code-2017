@@ -14,7 +14,7 @@
 (def day9-inputs
   (read-lines-classpath-resource "day9"))
 
-(def day9-test-inputs
-  (clojure.string/split-lines ""))
+(def day9-parser (insta/parser (clojure.java.io/resource "day9.bnf")))
+
 
 
