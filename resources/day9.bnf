@@ -1,6 +1,6 @@
 S = group
 group = <'{'> (group-item, (<','> group-item)*)? <'}'>
 <group-item> = group | garbage
-garbage = <'<'> (garbage-chars | garbage-cancel)* <'>'>
+garbage = <'<'> (garbage-chars | <garbage-cancel>)* <'>'>
 <garbage-chars> = #'[^>!]'
 <garbage-cancel> = '!' #'.'

@@ -25,6 +25,7 @@
   ((create-parser) day9-inputs))
 
 (defn score-groups
+  ""
   ([groups-tree prev-score]
    (let [node-type (first groups-tree)
          group? (= :group node-type)
@@ -39,3 +40,14 @@
        )))
   ([groups-tree]
    (score-groups (second groups-tree) 0)))
+
+;
+; Part 2
+;
+
+(defn count-garbage
+  ""
+  [groups-tree]
+  (count
+    (filter string?
+            (flatten groups-tree))))
