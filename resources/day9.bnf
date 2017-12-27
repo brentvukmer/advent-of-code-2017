@@ -1,8 +1,6 @@
 S = group
-group = <'{'> group-item?* <'}'>  <','?>
-<group-item> = (group? | garbage?)
-garbage = <'<'> garbage-item?* <'>'>  <','?>
-garbage-item = (garbage-chars? | double-bang? | bang-bracket?)
-<garbage-chars> = #'[a-z,\'\"\{\}\<\!]'
-<double-bang> = '!!'
-<bang-bracket> = '!>'
+group = <'{'> (group-item, (<','> group-item)*)? <'}'>
+<group-item> = group | garbage
+garbage = <'<'> (garbage-chars | garbage-cancel)* <'>'>
+<garbage-chars> = #'[^>!]'
+<garbage-cancel> = '!' #'.'

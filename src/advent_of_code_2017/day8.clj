@@ -85,6 +85,10 @@
   [inputs]
   (apply max (vals (last (process-register-instructions inputs)))))
 
+;
+; Part 2
+;
+
 (defn max-register-val-in-update-history
   ""
   [inputs]
