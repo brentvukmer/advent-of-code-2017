@@ -8,17 +8,50 @@
 (def day10-inputs
   (clojure.edn/read-string (str "[" (slurp (io/resource "day10")) "]")))
 
+(defn get-shift-count
+  "Number of items to shift to the front of the list of numbers"
+  [curr-pos nums-count length]
+  (if (= length nums-count)
+    curr-pos
+    (- nums-count length)))
+
+(defn cycle-reverse-splice
+  ""
+  [nums curr-pos length]
+  (if (= length 1)
+    nums
+    (let [nums-count (count nums)
+          shift-count (get-shift-count curr-pos nums-count length)
+          cycled (take nums-count (drop curr-pos (cycle nums)))
+          reversed-section (vec (reverse (take length cycled)))
+          spliced (if (= length nums-count)
+                    (apply conj
+                           (drop-last shift-count reversed-section)
+                           (take-last shift-count reversed-section))
+                    (apply conj
+                           reversed-section
+                           (take-last shift-count cycled)))]
+      spliced)))
+
+(defn circular-splice
+  ""
+  [spliced length]
+  (vec
+    (concat
+      (take-last (dec length) spliced)
+      (take (- (count spliced) (dec length)) spliced))))
+
 (defn knot
   "'Tie a knot' in the list"
   [nums curr-pos length]
   ; TODO: Clean up this dirty code.
-  (let [nums-count (count nums)
-        remaining-count (- nums-count length)
-        cycled (take nums-count (drop curr-pos (cycle nums)))
-        reversed-section (vec (reverse (take length cycled)))
-        spliced (apply conj reversed-section (take-last remaining-count cycled))
-        knotted (concat (take-last (dec remaining-count) spliced) (take (dec length) spliced))]
-    knotted))
+  (let [spliced (cycle-reverse-splice nums curr-pos length)
+        length-index (+ curr-pos length)
+        max-index (dec (count nums))]
+    (if (and (> length-index max-index)
+             (< length (count nums)))
+      (circular-splice spliced length)
+      spliced)))
 
 (defn do-knots
   "Take a given list of numbers (0-255 by default) and list of lengths, and 'tie a knot' in the list."
@@ -42,5 +75,9 @@
               (inc skip-size)
               (rest lengths))))))
 
+(defn knots-hash
+  ""
+  [v]
+  (* (first v) (second v)))
 
 
