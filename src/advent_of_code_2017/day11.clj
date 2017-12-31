@@ -44,3 +44,33 @@
    (grid-dist [0 0 0] xyz))
   ([[x1 y1 z1] [x2 y2 z2]]
    (apply max (map math/abs [(- x2 x1) (- y2 y1) (- z2 z1)]))))
+
+;
+; Part 2
+;
+
+(defn hex-move->xy
+  ""
+  [xy hex-move]
+  (vec (map + xy (hex-move hex-unit-coords))))
+
+(defn hex-moves->xyzs
+  ""
+  [input-str]
+  (let [moves (input-str->keywords input-str)
+        xys (reductions hex-move->xy [0 0] moves)
+        xyzs (map xy->xyz xys)]
+    xyzs))
+
+(defn max-dist-pos
+  ""
+  [input-str]
+  (let [xyzs (hex-moves->xyzs input-str)
+        sorted-by-dist (sort-by grid-dist xyzs)
+        max-dist-pos (last sorted-by-dist)]
+    max-dist-pos))
+
+(defn dist-max-current
+  ""
+  [input-str]
+  (grid-dist (hex-moves->xyz input-str) (max-dist-pos input-str)))
