@@ -5,79 +5,79 @@
 ; Part 1
 ;
 
-(def day10-inputs
-  (clojure.edn/read-string (str "[" (slurp (io/resource "day10")) "]")))
+(def day10-input-str
+  (slurp (io/resource "day10")))
 
-(defn get-shift-count
-  "Number of items to shift to the front of the list of numbers"
-  [curr-pos nums-count length]
-  (if (= length nums-count)
-    curr-pos
-    (- nums-count length)))
+(def day10-part1-inputs
+  (clojure.edn/read-string (str "[" day10-input-str "]")))
 
-(defn cycle-reverse-splice
+(def sample-nums [0, 1, 2, 3, 4])
+
+(def sample-lengths [3, 4, 1, 5])
+
+(def default-params [(range 0 256) 0 0])
+
+;
+; Deleted garbage code that used drop/take/cycle but not very well.
+;
+
+;
+; Code borrowed from:
+; https://github.com/mfikes/advent-of-code/blob/master/src/advent_2017/day_10.cljc#L9-L17
+;
+
+
+(defn make-knot
   ""
-  [nums curr-pos length]
-  (if (= length 1)
-    nums
-    (let [nums-count (count nums)
-          shift-count (get-shift-count curr-pos nums-count length)
-          cycled (take nums-count (drop curr-pos (cycle nums)))
-          reversed-section (vec (reverse (take length cycled)))
-          spliced (if (= length nums-count)
-                    (apply conj
-                           (drop-last shift-count reversed-section)
-                           (take-last shift-count reversed-section))
-                    (apply conj
-                           reversed-section
-                           (take-last shift-count cycled)))]
-      spliced)))
+  [[xs current-pos skip-size] length]
+  (let [rotated (drop current-pos (cycle xs))
+        to-reverse (take length rotated)
+        num-xs (count xs)
+        all-after (take (- num-xs length) (drop length rotated))
+        reversed-and-after (concat (reverse to-reverse) all-after)
+        xs-spliced-with-reversed (->>
+                                   (cycle reversed-and-after)
+                                   (drop (- num-xs current-pos))
+                                   (take num-xs) (vec))
+        next-pos (mod (+ current-pos length skip-size) num-xs)
+        next-skip-size (mod (inc skip-size) num-xs)]
+    [xs-spliced-with-reversed
+     next-pos
+     next-skip-size]))
 
-(defn circular-splice
+
+(defn round [lengths [xs current-pos skip-size]]
+  (reduce make-knot [xs current-pos skip-size] lengths))
+
+(defn knot-hash
   ""
-  [spliced length]
-  (vec
-    (concat
-      (take-last (dec length) spliced)
-      (take (- (count spliced) (dec length)) spliced))))
+  [lengths]
+  (apply * (take 2 (first (round lengths default-params)))))
 
-(defn knot
-  "'Tie a knot' in the list"
-  [nums curr-pos length]
-  ; TODO: Clean up this dirty code.
-  (let [spliced (cycle-reverse-splice nums curr-pos length)
-        length-index (+ curr-pos length)
-        max-index (dec (count nums))]
-    (if (and (> length-index max-index)
-             (< length (count nums)))
-      (circular-splice spliced length)
-      spliced)))
+;
+; Part 2
+;
 
-(defn do-knots
-  "Take a given list of numbers (0-255 by default) and list of lengths, and 'tie a knot' in the list."
-  ([lengths]
-   (do-knots (range 0 256) lengths))
-  ([nums lengths]
-   (do-knots nums 0 0 lengths))
-  ([nums curr-pos skip-size lengths]
-    ;; nums - list of numbers (by default, from 0 to 255)
-    ;; curr-pos - current position which begins at 0 (the first element in the list)
-    ;; skip-size - a skip size (which starts at 0)
-    ;; lengths - a sequence of lengths (your puzzle input)
-   (loop [nums nums
-          curr-pos curr-pos
-          skip-size skip-size
-          lengths lengths]
-     (if (empty? lengths)
-       nums
-       (recur (knot nums curr-pos (first lengths))
-              (mod (+ curr-pos (first lengths) skip-size) (count nums))
-              (inc skip-size)
-              (rest lengths))))))
-
-(defn knots-hash
+(defn ascii-inputs
   ""
-  [v]
-  (* (first v) (second v)))
+  [input-str]
+  (concat
+    (map #(int %) input-str)
+    '(17, 31, 73, 47, 23)))
 
+(def day10-part2-inputs
+  (ascii-inputs day10-input-str))
 
+(defn sparse-hash
+  [lengths [xs current-pos skip-size]]
+  (first (round
+           (take (* 64 (count lengths)) (cycle lengths))
+           [xs current-pos skip-size])))
+
+(defn dense-hash
+  [sparse-hash]
+  (map #(apply bit-xor %) (partition 16 sparse-hash)))
+
+(defn hexify
+  [dense-hash]
+  (apply str (map #(format "%02x" %) dense-hash)))
