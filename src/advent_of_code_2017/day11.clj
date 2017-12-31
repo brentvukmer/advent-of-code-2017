@@ -69,8 +69,3 @@
         sorted-by-dist (sort-by grid-dist xyzs)
         max-dist-pos (last sorted-by-dist)]
     max-dist-pos))
-
-(defn dist-max-current
-  ""
-  [input-str]
-  (grid-dist (hex-moves->xyz input-str) (max-dist-pos input-str)))
