@@ -4,7 +4,7 @@
 
 ## Credits
 
-I fixed up my EBNF grammar for Day 9 using [vvvvalvalval](https://github.com/vvvvalvalval/advent-of-code-2017)'s.
+I fixed up my EBNF grammar for Day 9 using [vvvvalvalval](https://github.com/vvvvalvalval/advent-of-code-2017)'s [EBNF](https://github.com/vvvvalvalval/advent-of-code-2017/blob/master/src/aoc2017/day09.clj#L4-L12).
 
 ## Inspiration
 
