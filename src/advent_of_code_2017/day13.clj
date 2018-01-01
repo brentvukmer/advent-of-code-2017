@@ -43,35 +43,52 @@
 
 (defn layer-scanner-pos
   ""
-  [t layer]
+  [t positions layer]
   (let [range (:range layer)
-        pos (if (zero? range)
-              -1
-              (mod t range))]
-    (assoc layer :scanner-pos pos :time t)))
+        start (if (zero? range)
+                0
+                (get positions t))
+        end (if (zero? start)
+              0
+              (get positions (inc t)))
+        scanner-pos {:start start :end end}]
+    (assoc layer :scanner-pos scanner-pos :time t)))
 
-;
-; Cheesy, but the way to get the starting positions is via t = -1.
-;
-(defn layer-scanner-positions-after-t
+(defn positions-range
   ""
-  [t layers]
-  (map #(layer-scanner-pos t %) layers))
+  [layer]
+  (let [layer-range (:range layer)]
+    (if (zero? layer-range)
+      '()
+      (range 0 layer-range))))
 
-(defn layer-scanner-positions-seq
+(defn trip-positions
+  ""
+  [positions-range num-layers]
+  (take num-layers
+        (cycle
+          (concat
+            positions-range
+            (drop-last (drop 1 (reverse positions-range)))))))
+
+(defn layer-history
+  ""
+  [layer num-layers]
+  (let [positions-range (positions-range layer)
+        trip-positions (if (empty? positions-range)
+                         '()
+                         (trip-positions positions-range num-layers))
+        history (if (empty? trip-positions)
+                  (take num-layers (repeat layer))
+                  (map #(assoc layer :scanner-pos %) trip-positions))]
+    history))
+
+(defn trip-seq
   ""
   [layers]
-  (map #(layer-scanner-positions-after-t % layers)
-       (range 0 (count layers))))
-
-(defn scanner-position-severity
-  ""
-  [layer-scanner-position]
-  (let [scanner-pos (:scanner-pos layer-scanner-position)
-        severity (* (:depth layer-scanner-position) (:range layer-scanner-position))]
-    (if (= 0 scanner-pos)
-      severity
-      0)))
+  (let [num-layers (count layers)]
+    (apply map vector
+           (map #(layer-history % num-layers) layers))))
 
 (defn packet-positions
   ""
@@ -79,10 +96,23 @@
   (let [indexes (range 0 (count (first trip-seq)))]
     (map #(get (vec %1) %2) trip-seq indexes)))
 
+(defn severity-score
+  ""
+  [position]
+  (let [start-pos (:scanner-pos position)
+        severity (* (:depth position) (:range position))]
+    (cond
+      (nil? start-pos)
+      0
+      (zero? start-pos)
+      severity
+      :else
+      0)))
+
 (defn trip-severity
   ""
   [trip-seq]
-  (apply + (map scanner-position-severity (packet-positions trip-seq))))
+  (apply + (map severity-score (packet-positions trip-seq))))
 
 (comment
   (def day13-layers
