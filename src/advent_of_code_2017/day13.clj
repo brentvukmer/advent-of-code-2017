@@ -26,9 +26,9 @@
 (defn input->layers
   ""
   [input-str]
-  (let [tokens (input->line-tokens input-str)
-        layers-from-input (into {} (map line-tokens->map-entry tokens))
-        input-depths (map first layers-from-input)
+  (let [line-tokens (input->line-tokens input-str)
+        layers-from-input (into {} (map line-tokens->map-entry line-tokens))
+        input-depths (sort (map first layers-from-input))
         all-depths (range
                      0
                      (inc (last input-depths)))
@@ -40,19 +40,6 @@
         layers-as-mapsv (sort-by :depth
                                  (map #(hash-map :depth (first %) :range (second %)) merged-layers))]
     layers-as-mapsv))
-
-(defn layer-scanner-pos
-  ""
-  [t positions layer]
-  (let [range (:range layer)
-        start (if (zero? range)
-                0
-                (get positions t))
-        end (if (zero? start)
-              0
-              (get positions (inc t)))
-        scanner-pos {:start start :end end}]
-    (assoc layer :scanner-pos scanner-pos :time t)))
 
 (defn positions-range
   ""
@@ -115,7 +102,5 @@
   (apply + (map severity-score (packet-positions trip-seq))))
 
 (comment
-  (def day13-layers
-    (input->layers day13-input-str))
-  (trip-severity (layer-scanner-positions-seq day13-layers)))
+  (trip-severity (trip-seq (input->layers day13-input-str))))
 
