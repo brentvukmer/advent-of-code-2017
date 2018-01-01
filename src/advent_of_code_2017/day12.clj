@@ -38,6 +38,11 @@
         (recur (set/union visited directs)
                (set (mapcat #(get pipes-map %) directs)))))))
 
+(defn count-groups
+  ""
+  [pipes-map]
+  (count (set (map #(connected % pipes-map) (keys pipes-map)))))
+
 
 
 
