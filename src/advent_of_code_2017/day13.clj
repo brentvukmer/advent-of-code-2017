@@ -9,7 +9,7 @@
 (def day13-input-str
   (slurp (io/resource "day13")))
 
-(defn tokens->map
+(defn line-tokens->map
   ""
   [[key-str val-str]]
   (let [key (Integer/parseInt (string/trim key-str))
@@ -19,10 +19,29 @@
 (defn lines->tokens
   ""
   [input-str]
-  (map tokens->map
-       (map #(string/split % #":")
-            (string/split-lines input-str))))
+  (map #(string/split % #":")
+       (string/split-lines input-str)))
+
+(defn input->layers
+  ""
+  [input-str]
+  (let [tokens (lines->tokens input-str)]
+    (vec (map line-tokens->map tokens))))
 
 (def day13-layers
-  (vec (lines->tokens day13-input-str)))
+  (input->layers day13-input-str))
+
+(defn scanner-pos
+  ""
+  [t layer]
+  (let [range (:range layer)
+        pos (mod t range)]
+    (assoc layer :scanner-pos pos)))
+
+(defn scanner-positions
+  ""
+  [t layers]
+  (map #(scanner-pos t %) layers))
+
+
 
