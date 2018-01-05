@@ -113,16 +113,17 @@
       positions-range
       (drop-last (drop 1 (reverse positions-range))))))
 
+(defn full-layer-ranges
+  "Includes placeholders for depths where there is no layer; those are treated as zero-range (no-op) layers."
+  [layers]
+  (let [layer-ranges (map range (map :range layers))
+        full-layer-ranges (map #(if (empty? %) '(-1) %) layer-ranges)]
+    full-layer-ranges))
+
 (defn gen-matrix-at
   "Creates a square matrix of scanner positions by layer for the given time t."
-  [layers t]
-  (let [num-layers (count layers)
-        layer-ranges (map range (map :range layers))
-        full-layers-ranges (map #(if (empty? %) '(-1) %) layer-ranges)
-        scanner-positions (mapv #(vec (take num-layers
-                                            (drop (* t num-layers)
-                                                  (lazy-scanner-positions %)))) full-layers-ranges)]
-    scanner-positions))
+  [num-layers t lazy-scanner-position-seqs]
+  (mapv #(vec (take num-layers (drop (* t num-layers) %))) lazy-scanner-position-seqs))
 
 (defn diagonal-coords
   ""
@@ -147,16 +148,77 @@
   [path]
   (not (contains? (set path) 0)))
 
+;
+; Takes forever
+;
 (defn find-path-time
   ""
   [layers max-time]
-  (for [t (range max-time)
-        :let [matrix (gen-matrix-at layers t)
-              diagonal (get-diagonal matrix)
-              safe-path-found (safe-path? diagonal)]
-        :when (or (= t max-time)
-                  safe-path-found)]
-    {:picoseconds       t
-     :scanner-positions (if safe-path-found
-                          diagonal
-                          :path-not-found)}))
+  (let [layer-ranges (full-layer-ranges layers)
+        lazy-scanner-position-seqs (mapv lazy-scanner-positions layer-ranges)
+        num-layers (count layers)]
+    (for [t (range max-time)
+          :let [matrix (gen-matrix-at num-layers t lazy-scanner-position-seqs)
+                diagonal (get-diagonal matrix)
+                safe-path-found (safe-path? diagonal)]
+          :when (or (= t max-time)
+                    safe-path-found)]
+      {:picoseconds       t
+       :scanner-positions (if safe-path-found
+                            diagonal
+                            :path-not-found)})))
+
+
+;
+; mfikes code
+; https://github.com/mfikes/advent-of-code/blob/master/src/advent_2017/day_13.cljc
+;
+
+(def input (->> "day13" io/resource io/reader line-seq))
+
+;
+; Don't need all my complicated code for generating matrix, finding diagonal.
+; All the data needed is right there in the inputs.
+;
+
+(def data (->> input (map #(mapv read-string (re-seq #"\d+" %)))))
+
+;
+; (* 2 (dec range)) to cover the number of positions
+; going from max range and then back to 1, starting over
+; at 0 via the magic of mod.
+;
+; No need to use cycle.
+;
+
+(defn caught? [depth range]
+  (zero? (mod depth (* 2 (dec range)))))
+
+;
+; Nice little example of using transducers.
+; Should work if 'data' is a lazy sequence, right?
+;
+; Helpful example of keep/when.
+;
+
+(defn part-1 []
+  (transduce (keep (fn [[depth range]]
+                     (when (caught? depth range)
+                       (* depth range))))
+             + data))
+;
+; So simple, fed by a lazy sequence.
+;
+; Does that makes it non-terminating if
+; the data doesn't provide for an answer, though?
+;
+; Helpful example of some/when.
+;
+
+(defn part-2 []
+  (some (fn [delay]
+          (when (not-any? (fn [[depth range]]
+                            (caught? (+ depth delay) range))
+                          data)
+            delay))
+        (range)))
