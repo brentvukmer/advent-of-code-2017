@@ -49,7 +49,7 @@
 (defn round [lengths [xs current-pos skip-size]]
   (reduce make-knot [xs current-pos skip-size] lengths))
 
-(defn knot-hash
+(defn part1
   ""
   [lengths]
   (apply * (take 2 (first (round lengths default-params)))))
@@ -81,3 +81,12 @@
 (defn hexify
   [dense-hash]
   (apply str (map #(format "%02x" %) dense-hash)))
+
+(defn knot-hash
+  ""
+  [input-str]
+  (-> input-str
+      ascii-inputs
+      (sparse-hash [(range 256) 0 0])
+      dense-hash
+      hexify))
