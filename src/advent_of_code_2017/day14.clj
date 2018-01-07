@@ -7,9 +7,6 @@
 ; Part 1
 ;
 
-(def day14-input-str
-  (slurp (io/resource "day14")))
-
 (defn gen-inputs
   ""
   [prefix]
@@ -33,12 +30,17 @@
         binstrs (map #(knothash->binstr (knot/knot-hash %)) inputs)]
     binstrs))
 
-(defn part1
+(defn count-occupied-slots
   ""
   [prefix]
   (let [binstrs (prefix->binstrs prefix)
         num-occupied-slots (apply + (map #(get (frequencies %) \1) binstrs))]
     num-occupied-slots))
+
+(defn part1
+  ""
+  []
+  (count-occupied-slots "vbqugkhl"))
 
 (def sample-binstrs (prefix->binstrs "flqrgnkx"))
 
@@ -48,29 +50,72 @@
 ; Part 2
 ;
 
-; Process one row at a time
 ; Record coordinates for slots with a 1
+;
+; Process one row at a time
 ; Where x coordinates are adjacent, create a region
 ; Search previous row's coordinates, where y coordinates are adjacent consolidate regions
 
-(def sample-coords [[1 0 1 0]
-                    [0 1 1 0]
-                    [1 0 0 1]
-                    [0 1 1 0]])
-
-(def binstrs->coords
+(defn binstrs->grid
   ""
   [binstrs]
-  (mapv
-    #(mapv (fn [x] (Character/digit x 2)) %)
-    binstrs))
+  (mapv vec binstrs))
 
-(def occupied-coords
+(defn get-adjacent-coords
   ""
-  [coords]
-  (for [x (range (count (first coords)))
-        y (range (count coords))
-        :let [coord [x y]
-              val (get-in coords coord)]
-        :when (= 1 val)]
-    coord))
+  [coord grid]
+  (let [xs (set (range (count (first grid))))
+        ys (set (range (count grid)))
+        possible-adj (mapv #(mapv + coord %)
+                           [[1 0] [0 1] [-1 0] [0 -1]])]
+    (vec
+      (filter (fn [[x y]] (and (contains? xs x)
+                               (contains? ys y))) possible-adj))))
+
+(defn discover-regions
+  ""
+  [grid]
+  (let [max-x (count (first grid))
+        max-y (count grid)
+        xy-region (atom {:region 0})]
+    (for [x (range max-x)]
+      (for [y (range max-y)
+            :let [coord [x y]
+                  val (get-in grid coord)
+                  current-region (get @xy-region coord)
+                  adjacent-coords (get-adjacent-coords coord grid)
+                  adjacent-region (filter some? (map #(get @xy-region %) adjacent-coords))]
+            :when (= \1 val)]
+        (cond
+
+          (and
+            (nil? current-region)
+            (nil? adjacent-region))
+
+          (let [new-region (inc (get @xy-region :region))
+                coords (conj adjacent-coords coord)]
+            (do
+              (swap! xy-region assoc :region new-region)
+              (map #(swap! xy-region assoc % new-region) coords)))
+
+          (and
+            (nil? current-region)
+            (some? adjacent-region))
+
+          (swap! xy-region assoc coord adjacent-region)
+
+          (and
+            (some? current-region)
+            (nil? adjacent-region))
+
+          (map #(swap! xy-region assoc % current-region) adjacent-coords)
+
+          )
+
+        ))
+    (apply sorted-set (vals @xy-region))))
+
+
+
+
+
