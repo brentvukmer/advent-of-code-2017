@@ -97,7 +97,7 @@
 
   )
 
-(defn merge-groups
+(defn merge-overlapping-groups
   ""
   [grid]
   (loop [groups (discover-groups grid)
@@ -107,19 +107,15 @@
       (let [group (first groups)
             matching-groups (apply set/union (keep #(when (some group %) %) (rest groups)))
             merged (set/union matching-groups group)
-            already-merged-matches (apply set/union (keep #(when (some merged %) %) merged-groups))
-            merged-with-already (set/union already-merged-matches merged)
-            pruned (remove #(some merged-with-already %) merged-groups)
-            more-matching-groups (apply set/union (keep #(when (some merged-with-already %) %) (rest groups)))
-            merge-more-matching (set/union merged-with-already more-matching-groups)
-            remaining (keep #(when (nil? (some merge-more-matching %)) %) (rest groups))]
+            pruned (remove #(some merged %) merged-groups)
+            remaining (keep #(when (nil? (some merged %)) %) (rest groups))]
         (recur remaining
-               (conj pruned merge-more-matching))))))
+               (conj pruned merged))))))
 
 (comment
   (do
-    (def sample-groups (merge-groups sample-grid))
-    (def input-groups (merge-groups input-grid))))
+    (def sample-groups (merge-overlapping-groups sample-grid))
+    (def input-groups (merge-overlapping-groups input-grid))))
 
 (comment
   (do
@@ -128,7 +124,13 @@
                      [\0 \1 \1 \1 \0 \0]
                      [\0 \0 \0 \1 \0 \0]
                      [\1 \1 \1 \1 \0 \1]])
-    (def snake-groups (vec (merge-groups snake-grid)))))
+    (def snake-groups (vec (merge-overlapping-groups snake-grid)))))
+
+
+; Where two groups have any adjacent coordinates, merge the groups into one
+(defn merge-adjacent-groups
+  ""
+  [])
 
 
 
