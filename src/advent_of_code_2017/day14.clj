@@ -105,10 +105,11 @@
     (if (empty? groups)
       merged-groups
       (let [group (first groups)
-            matching-groups (apply set/union (keep #(when (some group %) %) (rest groups)))
-            merged (set/union matching-groups group)
+            matching-groups (set (keep #(when (some group %) %) (rest groups)))
+            group-plus-matching (conj matching-groups group)
+            merged (apply set/union group-plus-matching)
             pruned (remove #(some merged %) merged-groups)
-            remaining (keep #(when (nil? (some merged %)) %) (rest groups))]
+            remaining (remove #(contains? group-plus-matching %) groups)]
         (recur remaining
                (conj pruned merged))))))
 
