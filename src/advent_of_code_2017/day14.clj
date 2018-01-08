@@ -116,8 +116,19 @@
         (recur remaining
                (conj pruned merge-more-matching))))))
 
-
 (comment
   (do
     (def sample-groups (merge-groups sample-grid))
     (def input-groups (merge-groups input-grid))))
+
+(comment
+  (do
+    (def snake-grid [[\1 \0 \0 \1 \1 \1]
+                     [\1 \1 \0 \1 \0 \0]
+                     [\0 \1 \1 \1 \0 \0]
+                     [\0 \0 \0 \1 \0 \0]
+                     [\1 \1 \1 \1 \0 \1]])
+    (def snake-groups (vec (merge-groups snake-grid)))))
+
+
+
