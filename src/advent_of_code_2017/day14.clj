@@ -43,10 +43,9 @@
   (count-occupied-slots "vbqugkhl"))
 
 (comment
-
-  (def sample-binstrs (prefix->binstrs "flqrgnkx"))
-
-  (def input-binstrs (prefix->binstrs "vbqugkhl")))
+  (do
+    (def sample-binstrs (prefix->binstrs "flqrgnkx"))
+    (def input-binstrs (prefix->binstrs "vbqugkhl"))))
 
 ;
 ; Part 2
@@ -58,10 +57,9 @@
   (mapv vec binstrs))
 
 (comment
-
-  (def sample-grid (binstrs->grid sample-binstrs))
-
-  (def input-grid (binstrs->grid input-binstrs)))
+  (do
+    (def sample-grid (binstrs->grid sample-binstrs))
+    (def input-grid (binstrs->grid input-binstrs))))
 
 (defn get-adjacent-coords
   ""
@@ -119,6 +117,7 @@
                (conj pruned merge-more-matching))))))
 
 
-
-
-
+(comment
+  (do
+    (def sample-groups (merge-groups sample-grid))
+    (def input-groups (merge-groups input-grid))))
