@@ -112,9 +112,11 @@
             already-merged-matches (apply set/union (keep #(when (some merged %) %) merged-groups))
             merged-with-already (set/union already-merged-matches merged)
             pruned (remove #(some merged-with-already %) merged-groups)
-            remaining (keep #(when (nil? (some merged-with-already %)) %) (rest groups))]
+            more-matching-groups (apply set/union (keep #(when (some merged-with-already %) %) (rest groups)))
+            merge-more-matching (set/union merged-with-already more-matching-groups)
+            remaining (keep #(when (nil? (some merge-more-matching %)) %) (rest groups))]
         (recur remaining
-               (conj pruned merged))))))
+               (conj pruned merge-more-matching))))))
 
 
 
