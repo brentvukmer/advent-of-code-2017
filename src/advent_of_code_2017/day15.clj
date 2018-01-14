@@ -15,24 +15,53 @@
 
 (def divisor 2147483647)
 
+(defn gen-next
+  ""
+  [x factor div]
+  (rem (* x factor) div))
+
 (defn lazy-gen
   ""
   [start factor div]
-  (iterate (fn [x] (rem (* x factor) div)) start))
+  (iterate (fn [x] (gen-next x factor div)) start))
 
-(defn gen-pairs
-  [n a' b']
+(defn lazy-gen-pairs
+  [a' b']
   (partition 2
              (interleave
-               (drop 1 (take (inc n) (lazy-gen a' factor-a divisor)))
-               (drop 1 (take (inc n) (lazy-gen b' factor-b divisor))))))
+               (lazy-gen a' factor-a divisor)
+               (lazy-gen b' factor-b divisor))))
 
 (defn test-last-16-bits
   [num]
   (map (fn [x] (bit-test num x)) (range 16)))
 
-(defn matching-pairs
+(defn pair-matches?
+  ""
+  [a b]
+  (= (test-last-16-bits a)
+     (test-last-16-bits b)))
+
+(defn lazy-matching-pairs
+  [a' b']
+  (filter #(pair-matches? (first %) (second %)) (lazy-gen-pairs a' b')))
+
+(defn reduce-pairs
+  ""
   [n a' b']
-  (filter #(= (test-last-16-bits (first %))
-              (test-last-16-bits (second %)))
-          (gen-pairs n a' b')))
+
+  (ffirst
+    (drop n
+          (take (inc n)
+                (iterate (fn [[sum prev-a prev-b]]
+                           (let [next-a (gen-next prev-a factor-a divisor)
+                                 next-b (gen-next prev-b factor-b divisor)
+                                 matching (pair-matches? next-a next-b)
+                                 next-sum (if matching (inc sum) sum)]
+                             [next-sum next-a next-b]))
+                         [0 a' b'])))))
+
+(defn part1
+  ""
+  [a' b']
+  (reduce-pairs 40000000 a' b'))
