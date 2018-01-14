@@ -54,8 +54,8 @@
     (drop n
           (take (inc n)
                 (iterate (fn [[sum prev-a prev-b]]
-                           (let [next-a (gen-next prev-a factor-a divisor)
-                                 next-b (gen-next prev-b factor-b divisor)
+                           (let [next-a (some () (lazy-gen prev-a factor-a divisor))
+                                 next-b (lazy-gen prev-b factor-b divisor)
                                  matching (pair-matches? next-a next-b)
                                  next-sum (if matching (inc sum) sum)]
                              [next-sum next-a next-b]))
@@ -65,3 +65,42 @@
   ""
   [a' b']
   (reduce-pairs 40000000 a' b'))
+
+;
+; Part 2
+;
+
+(defn match-for-mod
+  ""
+  [n x]
+  (= 0 (mod n x)))
+
+(defn match-for-a
+  ""
+  [n]
+  (match-for-mod n 4))
+
+(defn match-for-b
+  ""
+  [n]
+  (match-for-mod n 8))
+
+(defn find-next
+  ""
+  [prev factor matcher-fn]
+  (some (fn [x] (when (matcher-fn x) x))
+        (drop 1 (lazy-gen prev factor divisor))))
+
+(defn reduce-pairs2
+  ""
+  [n a' b']
+  (ffirst
+    (drop n
+          (take (inc n)
+                (iterate (fn [[sum prev-a prev-b]]
+                           (let [next-a (find-next prev-a factor-a match-for-a)
+                                 next-b (find-next prev-b factor-b match-for-b)
+                                 matching (pair-matches? next-a next-b)
+                                 next-sum (if matching (inc sum) sum)]
+                             [next-sum next-a next-b]))
+                         [0 a' b'])))))
