@@ -30,25 +30,14 @@
         binstrs (map #(knothash->binstr (knot/knot-hash %)) inputs)]
     binstrs))
 
-(defn count-occupied-slots
-  ""
-  [prefix]
-  (let [binstrs (prefix->binstrs prefix)
-        num-occupied-slots (apply + (map #(get (frequencies %) \1) binstrs))]
-    num-occupied-slots))
-
-(defn part1
-  ""
-  []
-  (count-occupied-slots "vbqugkhl"))
-
 (comment
   (do
     (def sample-binstrs (prefix->binstrs "flqrgnkx"))
     (def input-binstrs (prefix->binstrs "vbqugkhl"))))
 
+
 ;
-; Part 2
+; Super slow
 ;
 
 (defn binstrs->grid
@@ -61,19 +50,7 @@
     (def sample-grid (binstrs->grid sample-binstrs))
     (def input-grid (binstrs->grid input-binstrs))))
 
-(defn get-adjacent-coords
-  ""
-  [coord grid]
-  (let [rows (set (range (count grid)))
-        cols (set (range (count (first grid))))
-        possible-adj (mapv #(mapv + coord %)
-                           [[1 0] [0 1] [-1 0] [0 -1]])]
-    (vec
-      (filter (fn [[x y]] (and (contains? rows x)
-                               (contains? cols y)
-                               (= \1 (get-in grid [x y])))) possible-adj))))
-
-(defn discover-groups
+(defn find-ones
   ""
   [grid]
 
@@ -85,53 +62,73 @@
             :let [coord [row col]
                   val (get-in grid coord)]
             :when (= \1 val)]
-        (set (conj (get-adjacent-coords coord grid) coord))))))
+        coord))))
 
-(comment
+(defn count-occupied-slots
+  ""
+  [prefix]
+  (let [binstrs (prefix->binstrs prefix)
+        grid (binstrs->grid binstrs)
+        occupied-coords (find-ones grid)]
+    (count occupied-coords)))
 
-  (def groups1 (discover-groups [[\1 \0 \0 \1 \1 \0]
-                                 [\1 \1 \0 \1 \0 \0]
-                                 [\0 \0 \1 \0 \1 \0]
-                                 [\0 \0 \0 \0 \0 \0]
-                                 [\1 \1 \1 \1 \1 \1]]))
+(defn part1
+  ""
+  []
+  (count-occupied-slots "vbqugkhl"))
+;
+; Part 2
+;
 
-  )
-
-(defn merge-overlapping-groups
+(defn get-adjacent-coords
+  ""
+  [coord grid]
+  (let [rows (set (range (count grid)))
+        cols (set (range (count (first grid))))
+        possible-adj (mapv #(mapv + coord %)
+                           [[1 0] [0 1] [-1 0] [0 -1]])]
+    (vec
+      (filter (fn [[x y]] (and (contains? rows x)
+                               (contains? cols y)
+                               (= \1 (get-in grid [x y])))) possible-adj))))
+(defn map-coords
   ""
   [grid]
-  (loop [groups (discover-groups grid)
-         merged-groups []]
-    (if (empty? groups)
-      merged-groups
-      (let [group (first groups)
-            matching-groups (set (keep #(when (some group %) %) (rest groups)))
-            group-plus-matching (conj matching-groups group)
-            merged (apply set/union group-plus-matching)
-            pruned (remove #(some merged %) merged-groups)
-            remaining (remove #(contains? group-plus-matching %) groups)]
-        (recur remaining
-               (conj pruned merged))))))
+  (into {}
+        (for [coord (find-ones grid)
+              :let [neighbors (get-adjacent-coords coord grid)]]
+          [coord neighbors])))
 
 (comment
   (do
-    (def sample-groups (merge-overlapping-groups sample-grid))
-    (def input-groups (merge-overlapping-groups input-grid))))
+    (def grid1 [[\1 \0 \0 \1 \1 \0]
+                [\1 \1 \0 \1 \0 \0]
+                [\0 \0 \1 \0 \1 \0]
+                [\0 \0 \0 \0 \0 \0]
+                [\1 \1 \1 \1 \1 \1]])
 
-(comment
-  (do
     (def snake-grid [[\1 \0 \0 \1 \1 \1]
                      [\1 \1 \0 \1 \0 \0]
                      [\0 \1 \1 \1 \0 \0]
                      [\0 \0 \0 \1 \0 \0]
                      [\1 \1 \1 \1 \0 \1]])
-    (def snake-groups (vec (merge-overlapping-groups snake-grid)))))
+    ))
 
+;
+; Behold the sweetness: https://github.com/bhauman/advent-of-clojure-2016/blob/master/src/advent_of_clojure_2017/day12.clj
+;
 
-; Where two groups have any adjacent coordinates, merge the groups into one
-(defn merge-adjacent-groups
+(defn group
   ""
-  [])
+  [indexed root]
+  (into #{}
+        (tree-seq (let [seen (atom #{})]
+                    (fn [x] (when-not (@seen x)
+                              (swap! seen conj x))))
+                  indexed
+                  root)))
 
-
-
+(defn find-groups
+  [indexed]
+  (set
+    (map #(group indexed %) (keys indexed))))
