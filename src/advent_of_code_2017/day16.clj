@@ -32,7 +32,7 @@
   (let [positions-str (apply str (rest move-str))
         num-programs (edn/read-string positions-str)
         split-count (- (count line) num-programs)]
-    (apply concat (reverse (split-at split-count line))))
+    (vec (apply concat (reverse (split-at split-count line)))))
   )
 
 (defn partner
@@ -72,3 +72,30 @@
   ""
   [moves line]
   (reduce do-move line moves))
+
+;
+; Part 2
+;
+
+(defn repeat-do-moves
+  ""
+  [num-turns moves line]
+  (reduce do-move line (take (* num-turns (count moves)) (cycle moves))))
+
+;
+; Thanks for bhauman's code
+;
+(defn find-cycle-period
+  [line moves]
+  (inc
+    (count
+      (take-while #(not= line %)
+                  (drop 1
+                        (reductions do-move line (cycle moves)))))))
+
+(defn get-final-state
+  [n line moves]
+  (let [cycle-period (find-cycle-period line moves)
+        num-moves (mod n cycle-period)
+        num-turns (/ num-moves (count moves))]
+    (apply str (repeat-do-moves num-turns moves line))))
