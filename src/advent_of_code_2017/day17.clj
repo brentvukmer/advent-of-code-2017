@@ -41,9 +41,23 @@
 ; Part 2
 ;
 
-(defn value-after-zero
-  [num-steps buffer vals]
-  (let [[final-buf _] (populate-buffer num-steps buffer vals)
-        buf-to-zero (take-while #(not (zero? %)) final-buf)
-        after-zero-idx (inc (count buf-to-zero))]
-    (nth final-buf after-zero-idx)))
+;
+; Part 2
+;
+
+(defn find-indexes
+  ""
+  [num-steps vals]
+  (reductions
+    (fn [[prev-val idx] val]
+      (let [stepped-idx (mod (+ idx num-steps) (inc prev-val))
+            next-idx (inc stepped-idx)]
+        [val next-idx]
+        ))
+    [0 0]
+    vals))
+
+(defn find-second
+  ""
+  [num-steps max-val]
+  (filter #(= 1 (second %)) (find-indexes num-steps (range 1 max-val))))
