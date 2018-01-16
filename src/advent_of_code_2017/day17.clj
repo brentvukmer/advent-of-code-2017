@@ -40,3 +40,10 @@
 ;
 ; Part 2
 ;
+
+(defn value-after-zero
+  [num-steps buffer vals]
+  (let [[final-buf _] (populate-buffer num-steps buffer vals)
+        buf-to-zero (take-while #(not (zero? %)) final-buf)
+        after-zero-idx (inc (count buf-to-zero))]
+    (nth final-buf after-zero-idx)))
