@@ -36,58 +36,77 @@
 
 (defn process-instruction
   ""
-  [registers instruction]
-  (let [op (first instruction)]
-    (cond
+  [history instruction]
 
-      (= "snd" op)
-      (let [register-key (keyword (second instruction))]
-        {:sound (register-key registers)})
+  (let [result
+        (let [registers (:registers (last history))
+              op (keyword (first instruction))]
+          (println "processing: " instruction)
+          (cond
 
-      (= "set" op)
-      (let [x-key (keyword (second instruction))
-            y-key (keyword (get instruction 2))
-            updated-value (y-key registers)
-            updated-registers (assoc registers x-key updated-value)]
-        {:registers updated-registers})
+            (= :snd op)
+            (let [register-key (keyword (second instruction))]
+              {:registers registers :sound (register-key registers)})
 
-      (= "add" op)
-      (let [x-key (keyword (second instruction))
-            y-key (keyword (get instruction 2))
-            updated-value (+ (x-key registers) (y-key registers))
-            updated-registers (assoc registers x-key updated-value)]
-        {:registers updated-registers})
+            (= :set op)
+            (let [x (keyword (second instruction))
+                  y (get instruction 2)
+                  val (if (Character/isDigit (first y))
+                        (Integer/parseInt y)
+                        ((keyword y) registers))
+                  updated-registers (assoc registers x val)]
+              {:registers updated-registers})
 
-      (= "mul" op)
-      (let [x-key (keyword (second instruction))
-            y-key (keyword (get instruction 2))
-            updated-value (* (x-key registers) (y-key registers))
-            updated-registers (assoc registers x-key updated-value)]
-        {:registers updated-registers})
+            (= :add op)
+            (let [x (keyword (second instruction))
+                  y (get instruction 2)
+                  val (if (Character/isDigit (first y))
+                        (Integer/parseInt y)
+                        ((keyword y) registers))
+                  updated-value (+ (x registers) val)
+                  updated-registers (assoc registers x updated-value)]
+              {:registers updated-registers})
 
-      (= "mod" op)
-      (let [x-key (keyword (second instruction))
-            y-key (keyword (get instruction 2))
-            updated-value (mod (x-key registers) (y-key registers))
-            updated-registers (assoc registers x-key updated-value)]
-        {:registers updated-registers})
+            (= :mul op)
+            (let [x (keyword (second instruction))
+                  y (Integer/parseInt (get instruction 2))
+                  updated-value (* (x registers) y)
+                  updated-registers (assoc registers x updated-value)]
+              {:registers updated-registers})
 
-      (= "rcv" op)
-      (let [x (Integer/parseInt (second instruction))
-            freq (when (not (zero? x))
-                   (recover-last-sound instructions instruction x))]
-        {:recovery freq})
+            (= :mod op)
+            (let [x (keyword (second instruction))
+                  y (get instruction 2)
+                  val (if (Character/isDigit (first y))
+                        (Integer/parseInt y)
+                        ((keyword y) registers))
+                  updated-value (mod (x registers) val)
+                  updated-registers (assoc registers x updated-value)]
+              {:registers updated-registers})
 
-      (= "jgz" op)
-      (let [index-update (Integer/parseInt (second instruction))]
-        [registers index-update]))))
+            (= :rcv op)
+            (let [x (keyword (second instruction))
+                  val (x registers)
+                  freq (when (not (zero? val))
+                         (recover-last-sound instructions instruction x))]
+              {:registers registers :recovery freq})
 
-(defn process-instruction-at
-  ""
-  [registers instructions index]
-  (let [instruction (get instructions index)
-        [updated-registers index-update] (process-instruction registers instruction)]
-    [updated-registers (+ index index-update)]))
+            (= :jgz op)
+            (let [x (keyword (second instruction))
+                  x-val (x registers)
+                  y (get instruction 2)
+                  index-offset (if (> x-val 0) (Integer/parseInt y) 0)]
+              {:registers registers :index-offset index-offset})
+            ))]
+    (conj history result)))
+
+(defn reductions-instructions
+  [registers instructions]
+  (reduce
+    (fn [history instruction] (process-instruction history instruction))
+    [{:registers registers}]
+    instructions))
+
 
 ;
 ; Part 2
