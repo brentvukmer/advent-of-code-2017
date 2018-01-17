@@ -34,6 +34,13 @@
   ; Return arg if found
   )
 
+(defn num-check?
+  ""
+  [input]
+  (let [first-char (first input)]
+    (or (= \- first-char)
+        (Character/isDigit first-char))))
+
 (defn process-instruction
   ""
   [history instruction]
@@ -51,7 +58,7 @@
             (= :set op)
             (let [x (keyword (second instruction))
                   y (get instruction 2)
-                  val (if (Character/isDigit (first y))
+                  val (if (num-check? y)
                         (Integer/parseInt y)
                         ((keyword y) registers))
                   updated-registers (assoc registers x val)]
@@ -60,7 +67,7 @@
             (= :add op)
             (let [x (keyword (second instruction))
                   y (get instruction 2)
-                  val (if (Character/isDigit (first y))
+                  val (if (num-check? y)
                         (Integer/parseInt y)
                         ((keyword y) registers))
                   updated-value (+ (x registers) val)
@@ -77,7 +84,7 @@
             (= :mod op)
             (let [x (keyword (second instruction))
                   y (get instruction 2)
-                  val (if (Character/isDigit (first y))
+                  val (if (num-check? y)
                         (Integer/parseInt y)
                         ((keyword y) registers))
                   updated-value (mod (x registers) val)
@@ -92,8 +99,10 @@
               {:registers registers :recovery freq})
 
             (= :jgz op)
-            (let [x (keyword (second instruction))
-                  x-val (x registers)
+            (let [x (second instruction)
+                  x-val (if (num-check? x)
+                          (Integer/parseInt x)
+                          ((keyword x) registers))
                   y (get instruction 2)
                   index-offset (if (> x-val 0) (Integer/parseInt y) 0)]
               {:registers registers :index-offset index-offset})
