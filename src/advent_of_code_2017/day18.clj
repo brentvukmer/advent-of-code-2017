@@ -163,40 +163,51 @@
 (defn send-fn
   ""
   [out registers x]
-  (let [key-or-val (get-keyword-or-number x)
-        val (if (keyword? key-or-val)
-              (get registers key-or-val)
-              key-or-val)
-        result-channel (go (>! out val))
-        send-result (<!! result-channel)]
-    {:channel out :val val :send-result send-result}))
+  (let [val (if (keyword? x)
+              (get registers x)
+              x)]
+    (>!! out val)
+    {:channel (:pid registers) :sent val :registers registers}))
 
 (defn receive-fn
   ""
   [in registers x _]
-  (let [key-or-val (get-keyword-or-number x)
-        val (if (keyword? key-or-val)
-              (get registers key-or-val)
-              key-or-val)
-        result-channel (go (let [[v ch] (alts! in (timeout 500))] {:value v :channel ch}))
-        receive-result (<!! result-channel)]
-    {:channel in :val val :receive-result receive-result}))
+  (let [[v _] (alts!! [in (timeout 1000)])
+        updated-registers (if (some? v)
+                            (assoc registers x v)
+                            registers)]
+    {:channel (:pid registers) :received v :registers updated-registers}))
+
+(defn follow-instructions2
+  [pid registers instructions snd-fn rcv-fn]
+  (loop [history []
+         registers (assoc registers :p pid :pid pid)
+         instruction-index 0]
+    (if (or (= (count instructions) instruction-index)
+            (and
+              (some? (last history))
+              (contains? (last history) :received)
+              (nil? (:received (last history)))))
+      history
+      (let [instruction (get instructions instruction-index)
+            result (perform-instruction registers history instruction snd-fn rcv-fn)
+            index-offset (:index-offset result 1)
+            updated-offset (if (zero? index-offset) 1 index-offset)
+            updated-registers (:registers result)
+            updated-index (+ instruction-index updated-offset)]
+        (println (str "{ :program " pid " :result " result " :updated-index: " updated-index " }"))
+        (recur (conj history result)
+               updated-registers
+               updated-index)))))
 
 (defn follow-instructions-tandem
   [inputs]
   (let [regs (registers inputs)
         instructions (mapv parse-instruction inputs)
-        c0 (chan)
-        c1 (chan)
-        reg0 (assoc regs :p 0)
-        reg1 (assoc regs :p 1)
-        p0 (partial (fn [in out regs commands]
-                      (follow-instructions regs commands (partial send-fn out) (partial receive-fn in)))
-                    c1 c0 reg0)
-        p1 (partial (fn [in out regs commands]
-                      (follow-instructions regs commands (partial send-fn out) (partial receive-fn in)))
-                    c0 c1 reg1)
-        result-channel-0 (go (p0 instructions))
-        result-channel-1 (go (p1 instructions))]
+        c0 (chan 10)
+        c1 (chan 10)
+        results-0 (thread (follow-instructions2 0 regs instructions (partial send-fn c1) (partial receive-fn c0)))
+        results-1 (thread (follow-instructions2 1 regs instructions (partial send-fn c0) (partial receive-fn c1)))]
 
-    { :p0 (<!! result-channel-0) :p1 (<!! result-channel-1)}))
+    {:p0 (<!! results-0) :p1 (<!! results-1)}))
+
