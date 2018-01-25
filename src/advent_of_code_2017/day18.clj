@@ -11,6 +11,14 @@
 ;
 
 
+(defn read-inputs
+  ""
+  [resource-name]
+  (mapv #(str/split % #"\s")
+        (str/split-lines
+          (slurp
+            (io/resource resource-name)))))
+
 (defn num-check?
   ""
   [input]
@@ -36,12 +44,6 @@
    :y  (get-keyword-or-number (get input 2))})
 
 
-(def inputs
-  (mapv #(str/split % #"\s")
-        (str/split-lines
-          (slurp
-            (io/resource "day18")))))
-
 
 (defn registers
   [instruction-inputs]
@@ -51,23 +53,6 @@
                (filter #(Character/isAlphabetic
                           (int (first %)))
                        (map second instruction-inputs))))))
-
-
-(def sample-inputs
-  [["set" "a" "1"]
-   ["add" "a" "2"]
-   ["mul" "a" "a"]
-   ["mod" "a" "5"]
-   ["snd" "a"]
-   ["set" "a" "0"]
-   ["rcv" "a"]
-   ["jgz" "a" "-1"]
-   ["set" "a" "1"]
-   ["jgz" "a" "-2"]])
-
-
-(def instructions (mapv parse-instruction inputs))
-
 
 (defn sound
   ""
@@ -94,45 +79,50 @@
         y (:y instruction)
         y-val (if (keyword? y)
                 (get registers y)
-                y)]
-    (cond
+                y)
+        result
+        (cond
 
-      (= :snd op)
-      (assoc (snd-fn registers x) :instruction instruction)
+          (= :snd op)
+          (assoc (snd-fn registers x) :instruction instruction)
 
-      (= :set op)
-      (let [updated-registers (assoc registers x y-val)]
-        {:instruction instruction :registers updated-registers})
+          (= :set op)
+          (let [updated-registers (assoc registers x y-val)]
+            {:instruction instruction :registers updated-registers})
 
-      (= :add op)
-      (let [updated-value (+ (get registers x) y-val)
-            updated-registers (assoc registers x updated-value)]
-        {:instruction instruction :registers updated-registers})
+          (= :add op)
+          (let [updated-value (+ (get registers x) y-val)
+                updated-registers (assoc registers x updated-value)]
+            {:instruction instruction :registers updated-registers})
 
-      (= :mul op)
-      (let [updated-value (* (get registers x) y-val)
-            updated-registers (assoc registers x updated-value)]
-        {:instruction instruction :registers updated-registers})
+          (= :mul op)
+          (let [updated-value (* (get registers x) y-val)
+                updated-registers (assoc registers x updated-value)]
+            {:instruction instruction :registers updated-registers})
 
-      (= :mod op)
-      (let [updated-value (mod (get registers x) y-val)
-            updated-registers (assoc registers x updated-value)]
-        {:instruction instruction :registers updated-registers})
+          (= :mod op)
+          (let [updated-value (mod (get registers x) y-val)
+                updated-registers (assoc registers x updated-value)]
+            {:instruction instruction :registers updated-registers})
 
-      (= :rcv op)
-      (assoc (rcv-fn registers x history) :instruction instruction)
+          (= :rcv op)
+          (assoc (rcv-fn registers x history) :instruction instruction)
 
-      (= :jgz op)
-      (let [x-val (if (keyword? x)
-                    (get registers x)
-                    x)
-            index-offset (if (> x-val 0)
-                           (if (keyword? y)
-                             (get registers y)
-                             y)
-                           0)]
-        {:instruction instruction :registers registers :index-offset index-offset})
-      ))
+          (= :jgz op)
+          (let [x-val (if (keyword? x)
+                        (get registers x)
+                        x)
+                index-offset (if (> x-val 0)
+                               (if (keyword? y)
+                                 (get registers y)
+                                 y)
+                               0)]
+            {:instruction instruction :registers registers :index-offset index-offset})
+          )]
+    (assoc result
+      :instruction instruction
+      :time (. System currentTimeMillis)
+      :thread (.getName (Thread/currentThread))))
   )
 
 (defn follow-instructions
@@ -154,7 +144,19 @@
                updated-index)))))
 
 (comment
-  (follow-instructions (registers inputs) (mapv parse-instruction inputs) sound recover))
+  (def sample-inputs
+    [["set" "a" "1"]
+     ["add" "a" "2"]
+     ["mul" "a" "a"]
+     ["mod" "a" "5"]
+     ["snd" "a"]
+     ["set" "a" "0"]
+     ["rcv" "a"]
+     ["jgz" "a" "-1"]
+     ["set" "a" "1"]
+     ["jgz" "a" "-2"]])
+
+  (def part1-results (let [inputs (read-inputs "day18")] (follow-instructions (registers inputs) (mapv parse-instruction inputs) sound recover))))
 
 ;
 ; Part 2
@@ -183,6 +185,7 @@
   (loop [history []
          registers (assoc registers :p pid :pid pid)
          instruction-index 0]
+
     (if (or (= (count instructions) instruction-index)
             (and
               (some? (last history))
@@ -195,8 +198,9 @@
             updated-offset (if (zero? index-offset) 1 index-offset)
             updated-registers (:registers result)
             updated-index (+ instruction-index updated-offset)]
-        (println (str "{ :program " pid " :result " result " :updated-index: " updated-index " }"))
+
         (recur (conj history result)
+
                updated-registers
                updated-index)))))
 
@@ -204,10 +208,23 @@
   [inputs]
   (let [regs (registers inputs)
         instructions (mapv parse-instruction inputs)
-        c0 (chan 10)
-        c1 (chan 10)
-        results-0 (thread (follow-instructions2 0 regs instructions (partial send-fn c1) (partial receive-fn c0)))
-        results-1 (thread (follow-instructions2 1 regs instructions (partial send-fn c0) (partial receive-fn c1)))]
+        c0 (chan 100)
+        c1 (chan 100)
+        results-0 (go (follow-instructions2 0 regs instructions (partial send-fn c1) (partial receive-fn c0)))
+        results-1 (go (follow-instructions2 1 regs instructions (partial send-fn c0) (partial receive-fn c1)))]
 
     {:p0 (<!! results-0) :p1 (<!! results-1)}))
 
+
+(comment
+
+  (def day18-part2-sample
+    (let [inputs (read-inputs "day18-part2-sample")]
+      (follow-instructions-tandem inputs)))
+
+  (def day18-part2
+    (count
+      (filter #(contains? % :sent)
+              (:p1
+                (let [inputs (read-inputs "day18")]
+                  (follow-instructions-tandem inputs)))))))
