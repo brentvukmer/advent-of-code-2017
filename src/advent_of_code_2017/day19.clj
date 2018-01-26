@@ -113,7 +113,7 @@
                       (take-while some? (lazy-path diagram))))))
 
 ;
-; PART 2
+; Part 2
 ;
 
 (defn part2
