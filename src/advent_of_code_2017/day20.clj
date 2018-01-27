@@ -71,3 +71,34 @@
 ;
 ; Part 2
 ;
+
+(defn find-collisions
+  ""
+  [particles]
+  (into #{}
+        (keys
+          (filter #(> (count (second %)) 1)
+                  (group-by identity
+                            (map :p particles))))))
+
+(defn update-particles-filtering-collisions
+  ""
+  [particles]
+  (let [updated-particles (map update-particle particles)
+        collisions (find-collisions updated-particles)
+        filtered-particles (remove #(contains? collisions (:p %)) updated-particles)]
+    filtered-particles))
+
+(defn particle-count-after
+  ""
+  [n input-name]
+  (count
+    (last
+      (take n
+            (iterate update-particles-filtering-collisions
+                     (parse-particles-buffer input-name))))))
+
+(defn part2
+  ""
+  []
+  (particle-count-after 1000 "day20"))
