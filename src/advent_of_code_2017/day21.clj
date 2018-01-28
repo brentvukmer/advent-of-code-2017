@@ -37,27 +37,28 @@
 
 
 ;
-; Rotate clockwise by 90 degrees
+;
 ;
 (defn rotate
-  ""
+  "Rotate clockwise by 90 degrees."
   [pixels]
   (apply mapv #(vec (reverse %&)) pixels))
 
 
-;
-; flip up
-; flip right to left
-;
-(defn flip
-  ""
-  [pixels direction]
-  (cond
-    (= direction :up)
-    (map #(vec (reverse %)) pixels)
-    :else
-    []))
 
+(defn flip
+  "Flip either right-to-left (:x axis) or top-to-bottom (:y axis)."
+  [pixels axis]
+  (cond
+    (= axis :x)
+    (map #(vec (reverse %)) pixels)
+    (= axis :y)
+    (vec (reverse pixels))))
+
+(defn pixels->2by2
+  ""
+  [pixels]
+  [])
 
 ; Break the pixels up into 2x2 squares
 ; For each 2x2 square:
