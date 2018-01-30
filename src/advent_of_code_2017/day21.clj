@@ -98,6 +98,7 @@
           3)]
     split-factor))
 
+
 (defn split
   "Splits a pixels square into n x n squares."
   [pixels]
@@ -111,6 +112,17 @@
                         (map vec (partition n x))) %))
         (partition n pixels)))))
 
+(defn join-factor
+  ""
+  [enhanced]
+  (int (Math/sqrt (* (count enhanced) (count (first enhanced))))))
+
+
+(defn square?
+  [matrix]
+  (= (count matrix)
+     (count (first matrix))))
+
 (defn join
   "Joins n x n squares back into a single pixels square."
   [enhanced]
@@ -123,6 +135,14 @@
                    (map #(apply map concat %)
                         (partition n enhanced)))))))
 
+(defn join2
+  ""
+  [enhanced]
+  (let [flattened (flatten enhanced)
+        size (int (Math/sqrt (count flattened)))]
+    (mapv vec (partition size flattened))))
+
+
 (defn enhance
   ""
   [pixels rules]
@@ -131,22 +151,44 @@
         merged-squares (join enhanced)]
     merged-squares))
 
-
-(defn part1
+(defn do-turns
   ""
   [n rules]
-  (count
-    (filter #(= \# %)
-            (flatten
-              (last
-                (take (inc n)
-                      (iterate #(enhance % rules) start-pattern)))))))
+  (take (inc n)
+        (iterate #(enhance % rules) start-pattern)))
+
+(defn count-pixels
+  ""
+  [results]
+  (let [final (last results)
+        flattened (flatten final)
+        freqs (frequencies flattened)
+        num-pixels (get freqs \#)]
+     num-pixels))
 
 
 (comment
-  (part1 2 (parse-rules-from "day21-sample"))
-  (part1 5 (parse-rules-from "day21")))
+  (count-pixels (do-turns 2 (parse-rules-from "day21-sample")))
+  (count-pixels (do-turns 5 (parse-rules-from "day21"))))
 
 ;
 ; Part 2
 ;
+
+(defn enhance2
+  ""
+  [pixels rules]
+  (let [squares (split pixels)
+        enhanced (map #(:to (find-matching-rule % rules)) (apply concat squares))
+        merged-squares (join2 enhanced)]
+    merged-squares))
+
+(defn do-turns2
+  ""
+  [n rules]
+  (take (inc n)
+        (iterate #(enhance2 % rules) start-pattern)))
+
+(comment
+  (def results2 (do-turns2 18 (parse-rules-from "day21")))
+  (count-pixels results2))
