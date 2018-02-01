@@ -58,6 +58,10 @@
     (vec (reverse pixels))))
 
 
+;
+; Just flippin' switches and turning dials here.
+; Really should try to understand the math for this.
+;
 (defn rotate-flip-set
   ""
   [pattern]
@@ -86,6 +90,7 @@
         #(contains? candidates (:from %))
         (size-matching-rules pattern rules)))))
 
+
 (defn split-factor
   ""
   [c]
@@ -98,7 +103,9 @@
           3)]
     split-factor))
 
-
+;
+; This seems funky.  Surely there's a cleaner way to do it.
+;
 (defn split
   "Splits a pixels square into n x n squares."
   [pixels]
@@ -112,50 +119,33 @@
                         (map vec (partition n x))) %))
         (partition n pixels)))))
 
-(defn join-factor
-  ""
-  [enhanced]
-  (int (Math/sqrt (* (count enhanced) (count (first enhanced))))))
-
-
-(defn square?
-  [matrix]
-  (= (count matrix)
-     (count (first matrix))))
-
+;
+; Also funky.
+;
 (defn join
   "Joins n x n squares back into a single pixels square."
   [enhanced]
-  (let [n (split-factor enhanced)]
-    ; Account for starting pixels square being divisible by 3 (so already split)
-    (if (= 1 (count enhanced))
-      (first enhanced)
-      (mapv vec
-            (apply concat
-                   (map #(apply map concat %)
-                        (partition n enhanced)))))))
-
-(defn join2
-  ""
-  [enhanced]
-  (let [flattened (flatten enhanced)
-        size (int (Math/sqrt (count flattened)))]
-    (mapv vec (partition size flattened))))
+  (mapv
+    #(vec (apply concat %))
+    (apply concat
+           (map #(apply map list %) enhanced))))
 
 
 (defn enhance
   ""
   [pixels rules]
   (let [squares (split pixels)
-        enhanced (map #(:to (find-matching-rule % rules)) (apply concat squares))
+        enhanced (mapv #(mapv (fn [x] (:to (find-matching-rule x rules))) %) squares)
         merged-squares (join enhanced)]
     merged-squares))
+
 
 (defn do-turns
   ""
   [n rules]
   (take (inc n)
         (iterate #(enhance % rules) start-pattern)))
+
 
 (defn count-pixels
   ""
@@ -164,7 +154,7 @@
         flattened (flatten final)
         freqs (frequencies flattened)
         num-pixels (get freqs \#)]
-     num-pixels))
+    num-pixels))
 
 
 (comment
@@ -175,20 +165,14 @@
 ; Part 2
 ;
 
-(defn enhance2
-  ""
-  [pixels rules]
-  (let [squares (split pixels)
-        enhanced (map #(:to (find-matching-rule % rules)) (apply concat squares))
-        merged-squares (join2 enhanced)]
-    merged-squares))
+(defn dimensions
+  [matrix]
+  [(count matrix) (count (first matrix))])
 
-(defn do-turns2
-  ""
-  [n rules]
-  (take (inc n)
-        (iterate #(enhance2 % rules) start-pattern)))
+(defn square?
+  [matrix]
+  (let [[x y] (dimensions matrix)]
+    (= x y)))
 
 (comment
-  (def results2 (do-turns2 18 (parse-rules-from "day21")))
-  (count-pixels results2))
+  (count-pixels (do-turns 18 (parse-rules-from "day21"))))
