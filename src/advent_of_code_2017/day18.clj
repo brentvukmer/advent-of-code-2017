@@ -2,7 +2,6 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.core.async
-             :as async
              :refer [>! <! >!! <!! go chan buffer close! thread
                      alts! alts!! timeout]]))
 
