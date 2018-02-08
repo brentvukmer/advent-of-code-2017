@@ -155,17 +155,17 @@
 
   (loop [registers registers
          g (:g registers)]
-    (if (zero? g)
-      registers
-      (let [d (:e registers)
-            b (:b registers)
-            e (:e registers)
-            g (- (* d e) b)
-            f (if (zero? g)
-                0
-                (:f registers))
-            e1 (dec e )
-            g1 (- e1 b)]
+    (let [d (:e registers)
+          b (:b registers)
+          e (:e registers)
+          g (- (* d e) b)
+          f (if (zero? g)
+              0
+              (:f registers))
+          e1 (dec e)
+          g1 (- e1 b)]
+      (if (zero? g1)
+        registers
         (recur (assoc registers :d d :e e1 :f f :g g1)
                g1)))))
 
@@ -174,16 +174,16 @@
 
   (loop [registers registers
          g (:g registers)]
-    (if (zero? g)
-      registers
-      (let [e 2
-            update1 (assoc registers :e e)
-            update2 (loop-from-instruction-19 update1)
-            d (dec (:d update2))
-            b (:b update2)
-            g (- d b)]
-        (recur (assoc update2 :d d :g g)
-               g)))))
+    (let [e 2
+          update1 (assoc registers :e e)
+          update2 (loop-from-instruction-19 update1)
+          d (dec (:d update2))
+          b (:b update2)
+          g1 (- d b)]
+      (if (zero? g1)
+        registers
+        (recur (assoc update2 :d d :g g1)
+               g1)))))
 
 
 (defn loop-from-instruction-31
@@ -191,23 +191,24 @@
 
   (loop [registers registers
          g (:g registers)]
-    (if (zero? g)
-      registers
-      (let [f 1
-            d 2
-            updated1 (assoc registers :f f :d d)
-            updated2 (loop-from-instruction-23 updated1)
-            f1 (:f updated2)
-            h (if (zero? f1)
-                (dec (:h registers))
-                (:h registers))
-            b (:b updated2)
-            g (- b (:c registers))
-            b1 (if (zero? b)
-                 (dec b)
-                 b)]
-        (recur (assoc updated2 :b b1 :f f1 :g g :h h)
-               g)))))
+
+    (let [f 1
+          d 2
+          updated1 (assoc registers :f f :d d)
+          updated2 (loop-from-instruction-23 updated1)
+          f1 (:f updated2)
+          h (if (zero? f1)
+              (dec (:h registers))
+              (:h registers))
+          b (:b updated2)
+          g1 (- b (:c registers))
+          b1 (if (zero? b)
+               (dec b)
+               b)]
+      (if (zero? g1)
+        registers
+        (recur (assoc updated2 :b b1 :f f1 :g g1 :h h)
+               g1)))))
 
 
 (defn part2
