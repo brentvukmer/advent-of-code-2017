@@ -144,14 +144,7 @@
 
 (defn init
   [registers]
-  ;0   set b 57
-  ;1   set c b
-  ;2   jnz a 2 ;; 'a' is always 1, so 'jnz a 2' is equivalent to 'jnz 1 2'
-  ;3   jnz 1 5 ;; Never executed AFAICT
-  ;4   mul b 100
-  ;5   sub b -100000
-  ;6   set c b
-  ;7   sub c -17000
+
   (let [b (- (* 57 100) 100000)
         c (- b 17000)]
     (assoc registers :b b :c c)))
@@ -159,18 +152,7 @@
 
 (defn loop-from-instruction-19
   [registers]
-  ;;;; Jump from instruction 19 ;;;;
-  ;11  set g d
-  ;12  mul g e
-  ;13  sub g b
-  ;14  jnz g 2
-  ;;;; Only when 'g' is zero ;;;;
-  ;15  set f 0
-  ;16  sub e -1
-  ;17  set g e
-  ;18  sub g b
-  ;;;; Loop until 'g' is zero ;;;;
-  ;19  jnz g -8 ;; Fixed distance (always jump to instruction 11)
+
   (loop [registers registers
          g (:g registers)]
     (if (zero? g)
@@ -187,25 +169,7 @@
 
 (defn loop-from-instruction-23
   [registers]
-  ;;;; Jump from instruction 23 ;;;;
-  ;10  set e 2
-  ;;;; Jump from instruction 19 ;;;;
-  ;11  set g d
-  ;12  mul g e
-  ;13  sub g b
-  ;14  jnz g 2
-  ;;;; Only when 'g' is zero ;;;;
-  ;15  set f 0
-  ;16  sub e -1
-  ;17  set g e
-  ;18  sub g b
-  ;;;; Loop until 'g' is zero ;;;;
-  ;19  jnz g -8 ;; Fixed distance (always jump to instruction 11)
-  ;20  sub d -1
-  ;21  set g d
-  ;22  sub g b
-  ;;;; Loop until 'g' is zero ;;;;
-  ;23  jnz g -13 ;; Fixed distance (always jump to instruction 10)
+
   (loop [registers registers
          g (:g registers)]
     (if (zero? g)
@@ -219,87 +183,10 @@
         (recur (assoc update2 :d d :g g)
                g)))))
 
+
 (defn loop-from-instruction-31
   [registers]
-  ;;;; Loop from instruction 31 ;;;;
-  ;8   set f 1
 
-  ;9   set d 2
-
-  ;;;; Loop from instruction 23 ;;;;
-  ;10  set e 2
-
-  ;;;; Loop from instruction 19 ;;;;
-  ;11  set g d
-  ;12  mul g e
-  ;13  sub g b
-  ;14  jnz g 2
-  ;;;; Only when 'g' is zero ;;;;
-  ;15  set f 0
-  ;16  sub e -1
-  ;17  set g e
-  ;18  sub g b
-
-  ;;;; Loop until 'g' is zero ;;;;
-  ;19  jnz g -8 ;; Fixed distance (always jump to instruction 11)
-
-  ;20  sub d -1
-  ;21  set g d
-  ;22  sub g b
-
-  ;;;; Loop until 'g' is zero ;;;;
-  ;23  jnz g -13 ;; Fixed distance (always jump to instruction 10)
-
-  ;24  jnz f 2
-
-  ;;;; Only when 'f' is zero ;;;;
-  ;25  sub h -1 ;; This is the only register checked at the end
-
-  ;26  set g b
-  ;27  sub g c
-  ;;;; Loop from instruction 31 ;;;;
-  ;8   set f 1
-
-  ;9   set d 2
-
-  ;;;; Loop from instruction 23 ;;;;
-  ;10  set e 2
-
-  ;;;; Loop from instruction 19 ;;;;
-  ;11  set g d
-  ;12  mul g e
-  ;13  sub g b
-  ;14  jnz g 2
-  ;;;; Only when 'g' is zero ;;;;
-  ;15  set f 0
-  ;16  sub e -1
-  ;17  set g e
-  ;18  sub g b
-
-  ;;;; Loop until 'g' is zero ;;;;
-  ;19  jnz g -8 ;; Fixed distance (always jump to instruction 11)
-
-  ;20  sub d -1
-  ;21  set g d
-  ;22  sub g b
-
-  ;;;; Loop until 'g' is zero ;;;;
-  ;23  jnz g -13 ;; Fixed distance (always jump to instruction 10)
-
-  ;24  jnz f 2
-
-  ;;;; Only when 'f' is zero ;;;;
-  ;25  sub h -1 ;; This is the only register checked at the end
-
-  ;26  set g b
-  ;27  sub g c
-
-  ;28  jnz g 2
-  ;;;; Only when 'g' is zero
-  ;29  jnz 1 3
-
-  ;30  sub b -17
-  ;31  jnz 1 -23 ;; Fixed distance (always jump to instruction 8)
   (loop [registers registers
          g (:g registers)]
     (if (zero? g)
@@ -323,4 +210,5 @@
 
 (defn part2
   [registers]
+
   (loop-from-instruction-31 (init registers)))
