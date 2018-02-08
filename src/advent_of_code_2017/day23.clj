@@ -161,8 +161,10 @@
             b (:b registers)
             e (:e registers)
             g (- (* d e) b)
-            f (if (zero? g) 1 0)
-            e1 (- e 1)
+            f (if (zero? g)
+                0
+                (:f registers))
+            e1 (dec e )
             g1 (- e1 b)]
         (recur (assoc registers :d d :e e1 :f f :g g1)
                g1)))))
