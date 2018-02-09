@@ -163,7 +163,7 @@
 
   (loop [registers registers
          g (:g registers)]
-    (let [d (:e registers)
+    (let [d (:d registers)
           b (:b registers)
           e (:e registers)
           g1 (- (* d e) b)
@@ -184,8 +184,7 @@
   - g"
   [registers]
 
-  (loop [registers registers
-         g (:g registers)]
+  (loop [registers registers]
     (let [e 2
           update1 (assoc registers :e e)
           update2 (loop-from-instruction-19 update1)
@@ -194,8 +193,7 @@
           g1 (- d b)]
       (if (zero? g1)
         registers
-        (recur (assoc update2 :d d :g g1)
-               g1)))))
+        (recur (assoc update2 :d d :g g1))))))
 
 
 
@@ -208,8 +206,7 @@
    - (conditionally based on f) h."
   [registers]
 
-  (loop [registers registers
-         g (:g registers)]
+  (loop [registers registers]
 
     (let [f 1
           d 2
@@ -220,14 +217,10 @@
               (dec (:h registers))
               (:h registers))
           b (:b updated2)
-          g1 (- b (:c registers))
-          b1 (if (zero? b)
-               (dec b)
-               b)]
+          g1 (- b (:c registers))]
       (if (zero? g1)
         registers
-        (recur (assoc updated2 :b b1 :f f1 :g g1 :h h)
-               g1)))))
+        (recur (assoc updated2 :b (- b 17) :f f1 :g g1 :h h))))))
 
 
 (defn part2
