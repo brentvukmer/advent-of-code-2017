@@ -143,6 +143,9 @@
 
 
 (defn init
+  "Sets:
+  - b
+  - c"
   [registers]
 
   (let [b (- (* 57 100) 100000)
@@ -151,6 +154,11 @@
 
 
 (defn loop-from-instruction-19
+  "Modifies:
+  - d
+  - e
+  - f
+  - g"
   [registers]
 
   (loop [registers registers
@@ -158,18 +166,22 @@
     (let [d (:e registers)
           b (:b registers)
           e (:e registers)
-          g (- (* d e) b)
+          g1 (- (* d e) b)
           f (if (zero? g)
               0
               (:f registers))
           e1 (dec e)
-          g1 (- e1 b)]
-      (if (zero? g1)
+          g2 (- e1 b)]
+      (if (zero? g2)
         registers
         (recur (assoc registers :d d :e e1 :f f :g g1)
-               g1)))))
+               g2)))))
 
 (defn loop-from-instruction-23
+  "Modifies:
+  - d
+  - e
+  - g"
   [registers]
 
   (loop [registers registers
@@ -186,7 +198,14 @@
                g1)))))
 
 
+
 (defn loop-from-instruction-31
+  "Modifies:
+   - b
+   - d
+   - f
+   - g
+   - (conditionally based on f) h."
   [registers]
 
   (loop [registers registers
