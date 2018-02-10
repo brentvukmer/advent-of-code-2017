@@ -325,8 +325,9 @@
 (defn find-f0-vals
   []
   (for [b (range 105700 122700 17)
-        :let [d-e-vals (range 2 b)
-              combos (combo/combinations d-e-vals 2)
+        :let [max-factor (int (Math/sqrt b))
+              potential-factors (range 2 max-factor)
+              combos (combo/combinations potential-factors 2)
               matching (filter #(= b (* (first %) (second %))) combos)]
         :when (not (empty? matching))]
     [ :b b :matching matching]))
