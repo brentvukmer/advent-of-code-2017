@@ -302,6 +302,7 @@
 ; Q: How many times does loop23 run per loop31 run?
 ; A: 114189500 (see code below)
 
+
 (defn loop-run-counts
   []
   (let [b-vals (range 105700 122700 17)
@@ -311,6 +312,7 @@
      :loop23 d-e-count
      :loop19 (* d-e-count d-e-count)}))
 
+
 ;
 ; Q: How many times does loop19 run per loop23 run?
 ; A: 114189500 (same logic as for counting loop23 runs per loop31 run)
@@ -319,16 +321,19 @@
 ; A:
 ;
 
+
 (defn find-f0-vals
   []
-  (let [b-vals (range 105700 122700 17)
-        d-e-vals (map #(+ % -2) b-vals)
-        combos (combo/combinations d-e-vals 2)
-        b-val-set (set b-vals)
-        valid-d-e-vals (filter #(contains? b-val-set (* (first %) (second %))) combos)]
-    valid-d-e-vals))
+  (for [b (range 105700 122700 17)
+        :let [d-e-vals (range 2 b)
+              combos (combo/combinations d-e-vals 2)
+              matching (filter #(= b (* (first %) (second %))) combos)]
+        :when (not (empty? matching))]
+    [ :b b :matching matching]))
 
-
+;
+; For each b value, discover the set of [d e] tuples whose product equals b
+;
 
 (defn part2
   [registers]
