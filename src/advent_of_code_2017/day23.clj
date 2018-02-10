@@ -1,7 +1,6 @@
 (ns advent-of-code-2017.day23
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [advent-of-code-2017.day18 :as duet]))
+  (:require [advent-of-code-2017.day18 :as duet]
+            [clojure.math.combinatorics :as combo]))
 
 
 ;
@@ -148,12 +147,16 @@
   - c"
   [registers]
 
-  (let [b (- (* 57 100) 100000)
-        c (- b 17000)]
-    (assoc registers :b b :c c)))
+  (let [a 1
+        b (- (* 57 100) -100000)
+        c (- b -17000)]
+    (assoc registers :a a :b b :c c)))
 
 
-(defn loop-from-instruction-19
+(def part2-initial-registers (init registers))
+
+
+(defn loop19
   "Modifies:
   - d
   - e
@@ -161,23 +164,23 @@
   - g"
   [registers]
 
-  (loop [registers registers
-         g (:g registers)]
+  (loop [registers registers]
     (let [d (:d registers)
           b (:b registers)
-          e (:e registers)
+          e (:e registers)                                  ;; e starts loop at 1
           g1 (- (* d e) b)
-          f (if (zero? g)
+          f (if (zero? g1)
               0
               (:f registers))
-          e1 (dec e)
-          g2 (- e1 b)]
+          e1 (inc e)
+          g2 (- e1 b)
+          updated-registers (assoc registers :d d :e e1 :f f)]
       (if (zero? g2)
-        registers
-        (recur (assoc registers :d d :e e1 :f f :g g1)
-               g2)))))
+        updated-registers
+        (recur (assoc updated-registers :g g2))))))
 
-(defn loop-from-instruction-23
+
+(defn loop23
   "Modifies:
   - d
   - e
@@ -186,44 +189,148 @@
 
   (loop [registers registers]
     (let [e 2
-          update1 (assoc registers :e e)
-          update2 (loop-from-instruction-19 update1)
-          d (dec (:d update2))
-          b (:b update2)
-          g1 (- d b)]
-      (if (zero? g1)
-        registers
-        (recur (assoc update2 :d d :g g1))))))
+          updated-registers (loop19 (assoc registers :e e))
+          d (inc (:d updated-registers))                    ;; d starts loop at 1
+          g (- d (:b updated-registers))]
+      (if (zero? g)
+        (assoc updated-registers :d d :g g)
+        (recur (assoc updated-registers :d d :g g))))))
 
 
+(defn loop31
+  "Initializes:
+  - f to 1
+  - d to 2
 
-(defn loop-from-instruction-31
-  "Modifies:
-   - b
-   - d
-   - f
-   - g
+  Updates:
+   - g (using b and c)
    - (conditionally based on f) h."
   [registers]
 
   (loop [registers registers]
 
-    (let [f 1
-          d 2
-          updated1 (assoc registers :f f :d d)
-          updated2 (loop-from-instruction-23 updated1)
-          f1 (:f updated2)
-          h (if (zero? f1)
-              (dec (:h registers))
+    (let [updated-registers (loop23 (assoc registers :f 1 :d 2))
+          h (if (zero? (:f updated-registers))
+              (dec (:h updated-registers))
               (:h registers))
-          b (:b updated2)
-          g1 (- b (:c registers))]
-      (if (zero? g1)
-        registers
-        (recur (assoc updated2 :b (- b 17) :f f1 :g g1 :h h))))))
+          b (:b updated-registers)
+          g (- b (:c part2-initial-registers))]
+      (if (zero? g)
+        (assoc updated-registers :g g :h h)
+        (recur (assoc updated-registers :b (+ b 17) :g g :h h)))))) ;; I don't think the updated g value is used
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;    Instructions 0-7 only done once
+;
+;0   set b 57
+;1   set c b ;; Redundant w/ instruction 6
+;2   jnz a 2 ;; 'a' is always 1, so 'jnz a 2' is equivalent to 'jnz 1 2'
+;3   jnz 1 5 ;; Never executed
+;4   mul b 100
+;5   sub b -100000
+;6   set c b
+;7   sub c -17000
+;                 c doesn't change after this
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;    Loop from instruction 31
+;
+;8   set f 1
+;9   set d 2
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;    Loop from instruction 23
+;
+;10  set e 2
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;    Loop from instruction 19
+;
+;11  set g d
+;12  mul g e
+;13  sub g b ;; Zero when d*e equals b
+;14  jnz g 2
+;;;; Only when g is zero ;;;;
+;15  set f 0
+;16  sub e -1 ;; Equivalent to 'add e 1'
+;17  set g e
+;18  sub g b ;; Zero when e+1 equals b
+;
+;;;; Loop until 'g' is zero ;;;;
+;19  jnz g -8 ;; Fixed distance (always jump to instruction 11)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;20  sub d -1 ;; Equivalent to 'add d 1'
+;21  set g d
+;22  sub g b ;; Zero when d+1 equals b
+;
+;;;; Loop until g is zero ;;;;
+;23  jnz g -13 ;; Fixed distance (always jump to instruction 10)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+;24  jnz f 2
+;
+;;;; Only when f is zero ;;;;
+;25  sub h -1 ;; Equivalent to 'add h 1'
+;; This is the only register checked at the end
+;
+;26  set g b
+;27  sub g c
+;
+;28  jnz g 2 ;; Zero when b equals c
+;               We know that c does not change after init.
+;               We know that at the start (after init) that c is 17000 less than b.
+;               Since we are incrementing b by 17, loop31 will run 1000 times.
+;
+;;;; Only when g is zero
+;29  jnz 1 3 ;; EXIT PROGRAM
+;
+;30  sub b -17 ;; Equivalent to 'add b 17'
+;31  jnz 1 -23 ;; Fixed distance (always jump to instruction 8)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; loop31 exits (and the program exits) when g is zero.
+; loop23 and loop19 do not modify b.
+;
+; h gets incremented in loop31 if f is zero.
+; Q: How many times does h get incremented?  (If we know this, we're done.)
+; A:
+;
+; Q: How many times does loop31 run?
+; A: loop31 will run 1000 times. (See notes above for instruction 28.)
+;
+; Q: How many times does loop23 run per loop31 run?
+; A: 114189500 (see code below)
+
+(defn loop-run-counts
+  []
+  (let [b-vals (range 105700 122700 17)
+        d-e-vals (map #(+ % -2) b-vals)
+        d-e-count (reduce + d-e-vals)]
+    {:loop31 (/ 17000 17)
+     :loop23 d-e-count
+     :loop19 (* d-e-count d-e-count)}))
+
+;
+; Q: How many times does loop19 run per loop23 run?
+; A: 114189500 (same logic as for counting loop23 runs per loop31 run)
+;
+; Q: How many times in each set of loop19's runs does f get set to zero?
+; A:
+;
+
+(defn find-f0-vals
+  []
+  (let [b-vals (range 105700 122700 17)
+        d-e-vals (map #(+ % -2) b-vals)
+        combos (combo/combinations d-e-vals 2)
+        b-val-set (set b-vals)
+        valid-d-e-vals (filter #(contains? b-val-set (* (first %) (second %))) combos)]
+    valid-d-e-vals))
+
 
 
 (defn part2
   [registers]
 
-  (loop-from-instruction-31 (init registers)))
+  (loop31 part2-initial-registers))
