@@ -30,9 +30,12 @@
 (defn pairs
   [c components]
 
-  (filter (fn [x] (or (= (second c) (first x))
-                      (= (second c) (second x))))
-          (remove #(= c %) components)))
+  (let [filtered (remove #(= c %) components)
+        ;; Account for zero-ports; they can only match on second element
+        s (if (zero? (first c))
+            #{(second c)}
+            (set c))]
+    (filter (fn [x] (some s x)) filtered)))
 
 
 (defn indexed
@@ -47,21 +50,32 @@
 (defn bridges
   ""
   [indexed root]
-  (tree-seq (let [seen (atom #{})]
-              (fn [x] (when-not (@seen (last x))
-                        (swap! seen conj (last x)))))
-            #(map (fn [t] (conj % t)) (get indexed (last %)))
-            [root]))
+  (let [seen (atom #{})]
+    (tree-seq
+      (fn [x] (when-not (@seen (last x))
+                (swap! seen conj (last x))))
+      #(map (fn [t] (conj % t))
+            (filter (fn [y] (not (contains? @seen y)))
+                    (get indexed (last %))))
+      [root])))
 
+(defn zero-ports
+  [components]
+  (let [sets (map set components)
+        zeros (filter #(contains? % 0) sets)]
+    (mapv vec zeros)))
 
 (defn part1
-  [root components]
-  (last
-    (sort
-      (map #(reduce + (flatten %))
-           (bridges
-             (indexed components)
-             root)))))
+  [components]
+  (let [tree (indexed components)
+        zeros (zero-ports components)]
+    (last
+      (sort
+        (map #(reduce + (flatten %))
+             (mapcat
+               #(bridges
+                  tree
+                  %) zeros))))))
 
 
 ;
