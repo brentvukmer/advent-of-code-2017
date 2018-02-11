@@ -13,39 +13,55 @@
 (def input (->> "day24" io/resource io/reader line-seq))
 
 
-(def components (sort (map #(edn/read-string (str "[" (str/replace % #"\/" " ") "]")) input)))
+(def sample-input (str/split-lines "0/2\n2/2\n2/3\n3/4\n3/5\n0/1\n10/1\n9/10"))
 
 
-(def combos (combo/combinations components 2))
+(defn parse-components
+  [input-str]
+  (map #(edn/read-string (str "[" (str/replace % #"\/" " ") "]")) input-str))
+
+
+(def components (parse-components input))
+
+
+(def sample-components (parse-components sample-input))
 
 
 (defn pairs
   [c components]
 
-  (filter (fn [x] (= (second c) (first x)))
+  (filter (fn [x] (or (= (second c) (first x))
+                      (= (second c) (second x))))
           (remove #(= c %) components)))
 
 
-(defn usable-components
-  [first components]
+(defn indexed
+  [components]
 
-  (tree-seq
-    #(not (empty? (pairs % components)))
-    #(pairs % components)
-    first))
+  (into {}
+        (map
+          #(vector % (pairs % components))
+          components)))
 
 
 (defn bridges
-  [first components]
+  ""
+  [indexed root]
+  (tree-seq (let [seen (atom #{})]
+              (fn [x] (when-not (@seen (last x))
+                        (swap! seen conj (last x)))))
+            #(map (fn [t] (conj % t)) (get indexed (last %)))
+            [root]))
 
-  (let [usable (usable-components first components)]
-    (loop [paths []
-           node (first usable)
-           remaining (rest usable)]
-      (if (empty? remaining)
-        paths
-        (let [children (pairs node remaining)]
-          )))))
+
+(defn part1
+  [root components]
+  (last
+    (sort
+      (map #(reduce + (flatten %))
+           (bridges
+             (indexed components)
+             root)))))
 
 
 ;
