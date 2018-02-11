@@ -114,33 +114,6 @@
 ;
 
 
-(defn follow-instructions2
-  [n registers instructions]
-  (loop [countdown n
-         indexes-seen #{}
-         registers registers
-         instruction-index 0]
-    (if (or (not (instruction-in-range? instructions instruction-index))
-            (= countdown 0))
-      {:indexes-seen (sort indexes-seen) :registers registers}
-      (let [instruction (get instructions instruction-index)
-            result (assoc (perform-instruction registers instruction) :instruction-index instruction-index)
-            index-offset (:index-offset result 1)
-            updated-offset (if (zero? index-offset) 1 index-offset)
-            updated-registers (:registers result)
-            updated-index (+ instruction-index updated-offset)]
-        ;(println "instruction: " instruction " (index: " instruction-index " )")
-        ;(println "updated registers: " updated-registers)
-        (recur (dec countdown)
-               (conj indexes-seen instruction-index)
-               updated-registers
-               updated-index)))))
-
-
-(comment
-  (follow-instructions2 n (assoc-in registers [:a] 1) instructions))
-
-
 (defn init
   "Sets:
   - b
