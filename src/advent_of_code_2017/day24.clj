@@ -16,16 +16,27 @@
 (def components (sort (map #(edn/read-string (str "[" (str/replace % #"\/" " ") "]")) input)))
 
 
-(def start-components (into #{} (filter #(zero? (first %)) components)))
-
-
-(def remaining-components (filter #(not (contains? start-components %)) components))
-
-
 (def combos (combo/combinations components 2))
 
 
-(def valid-combos (filter #(= (second (first %)) (first (second %))) combos))
+(defn pairs
+  [c components]
+  (filter (fn [x] (= (second c) (first x)))
+          (remove #(= c %) components)))
+
+
+(defn bridges
+  [first components]
+  (loop [node first
+         tree-paths '([[first]])
+         remaining (remove #(= first %) components)]
+    (if (empty? remaining)
+      tree-paths
+      (let [updated-paths (map
+                            #(map
+                               (fn [x] (conj % x))
+                               (pairs (last %) components)) tree-paths)
+            tbd (flatten up)]))))
 
 
 ;
