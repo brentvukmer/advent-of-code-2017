@@ -211,7 +211,7 @@
 
     (let [updated-registers (loop23 (assoc registers :f 1 :d 2))
           h (if (zero? (:f updated-registers))
-              (dec (:h updated-registers))
+              (inc (:h updated-registers))
               (:h registers))
           b (:b updated-registers)
           g (- b (:c part2-initial-registers))]
@@ -312,7 +312,6 @@
      :loop23 d-e-count
      :loop19 (* d-e-count d-e-count)}))
 
-
 ;
 ; Q: How many times does loop19 run per loop23 run?
 ; A: 114189500 (same logic as for counting loop23 runs per loop31 run)
@@ -321,22 +320,25 @@
 ; A:
 ;
 
+(defn matching-factors
+  [n]
+  (let [factors (range 2 n)
+        valid-factors (filter #(zero? (mod n %)) factors)
+        combos (combo/combinations valid-factors 2)
+        matching (filter #(= n (* (first %) (second %))) combos)]
+    matching))
+
 
 (defn find-f0-vals
   []
-  (for [b (range 105700 122700 17)
-        :let [max-factor (int (Math/sqrt b))
-              potential-factors (range 2 max-factor)
-              combos (combo/combinations potential-factors 2)
-              matching (filter #(= b (* (first %) (second %))) combos)]
-        :when (not (empty? matching))]
-    [ :b b :matching matching]))
+  (sort
+    (into {}
+          (for [b (range 105700 122717 17)
+                :let [matching (matching-factors b)]
+                :when (not (empty? matching))]
+            [b matching]))))
 
-;
-; For each b value, discover the set of [d e] tuples whose product equals b
-;
 
 (defn part2
-  [registers]
-
-  (loop31 part2-initial-registers))
+  []
+  (count (find-f0-vals)))
