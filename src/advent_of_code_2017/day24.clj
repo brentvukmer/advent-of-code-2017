@@ -21,22 +21,31 @@
 
 (defn pairs
   [c components]
+
   (filter (fn [x] (= (second c) (first x)))
           (remove #(= c %) components)))
 
 
+(defn usable-components
+  [first components]
+
+  (tree-seq
+    #(not (empty? (pairs % components)))
+    #(pairs % components)
+    first))
+
+
 (defn bridges
   [first components]
-  (loop [node first
-         tree-paths '([[first]])
-         remaining (remove #(= first %) components)]
-    (if (empty? remaining)
-      tree-paths
-      (let [updated-paths (map
-                            #(map
-                               (fn [x] (conj % x))
-                               (pairs (last %) components)) tree-paths)
-            tbd (flatten up)]))))
+
+  (let [usable (usable-components first components)]
+    (loop [paths []
+           node (first usable)
+           remaining (rest usable)]
+      (if (empty? remaining)
+        paths
+        (let [children (pairs node remaining)]
+          )))))
 
 
 ;
