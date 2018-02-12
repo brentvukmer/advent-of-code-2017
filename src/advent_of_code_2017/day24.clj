@@ -91,13 +91,21 @@
     (last
       (sort
         (map #(reduce + (flatten %))
-             (mapcat
-               #(bridges
-                  tree
-                  %) zeros))))))
+             (mapcat #(bridges tree %) zeros))))))
 
 
 ;
 ; Part 2
 ;
 
+
+(defn part2
+  [components]
+  (let [tree (indexed components)
+        zeros (zero-ports components)
+        bridges (mapcat #(bridges tree %) zeros)
+        grouped-by-length (group-by count bridges)
+        max-length (apply max (keys grouped-by-length))]
+    (apply max
+      (map #(reduce + (flatten %))
+           (get grouped-by-length max-length)))))
