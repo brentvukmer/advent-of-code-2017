@@ -126,12 +126,11 @@
       [(conj tape 0) cursor]
       :else
       (throw (RuntimeException. "Invalid cursor update")))
-    tape))
+    [tape cursor]))
 
 
 (defn do-step
   [[tape cursor state state-rules]]
-  (println "Doing step with cursor: " cursor)
   (let [rules (:rules (first (filter #(= state (:state %)) state-rules)))
         current-value (get tape cursor)
         rule-matching-value (first (filter #(= current-value (:current-value %)) rules))
@@ -142,7 +141,6 @@
         [extended-tape extended-cursor] (extend-tape updated-tape updated-cursor)
         updated-state (:next-state rule-matching-value)
         step-output [extended-tape extended-cursor updated-state state-rules]]
-    (println "Step output: " step-output)
     step-output))
 
 
