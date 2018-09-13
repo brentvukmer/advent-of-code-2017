@@ -14,6 +14,8 @@ I compared my solutions to those from:
 - [bhauman](https://github.com/bhauman/advent-of-clojure-2016)
 - [vvvvalvalval](https://github.com/vvvvalvalval/advent-of-code-2017)
 
+See [also](https://github.com/adventofcode-clojurians/adventofcode-clojurians)
+
 ## License
 
 Copyright © 2017
